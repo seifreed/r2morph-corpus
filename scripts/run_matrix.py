@@ -78,12 +78,21 @@ def run_matrix(build_root: Path, output_root: Path, seed: int) -> dict[str, Any]
     built = [record for record in records if isinstance(record, dict) and record.get("status") == "built"]
     output_root.mkdir(parents=True, exist_ok=True)
     results = [_run_sample(build_root, output_root, record, seed) for record in built]
+    failed_records = [
+        {
+            "id": result.get("id"),
+            "reason": result.get("reason", "differential observables diverged"),
+        }
+        for result in results
+        if result["status"] == "error"
+    ][:20]
     return {
         "schema_version": 1,
         "seed": seed,
         "built_samples": len(built),
         "passed_samples": sum(result["status"] == "passed" for result in results),
         "failed_samples": sum(result["status"] == "error" for result in results),
+        "failed_records": failed_records,
         "records": results,
     }
 
@@ -103,6 +112,7 @@ def main() -> int:
                 "built_samples": result["built_samples"],
                 "passed_samples": result["passed_samples"],
                 "failed_samples": result["failed_samples"],
+                "failed_records": result["failed_records"],
             },
             sort_keys=True,
         )
