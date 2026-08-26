@@ -1,0 +1,46 @@
+name: Corpus
+
+"on":
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-compare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install compilers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang g++
+      - name: Validate scripts
+        run: python -m compileall -q scripts
+      - name: Build compiler matrix
+        run: python scripts/build_corpus.py --output build
+      - name: Require built samples
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          manifest = json.loads(Path("build/manifest.json").read_text())
+          built = [row for row in manifest["records"] if row["status"] == "built"]
+          if not built:
+              raise SystemExit("compiler matrix produced no samples")
+          print(f"built samples: {len(built)}")
+          PY
+      - name: Compare a built sample with itself
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          sample = next(row for row in json.loads(Path("build/manifest.json").read_text())["records"] if row["status"] == "built")
+          Path("selected-sample").write_text(sample["id"])
+          PY
+          sample="build/$(cat selected-sample)"
+          python scripts/differential_run.py "$sample" "$sample" --output differential.json
+          grep -q '"equivalent": true' differential.json
