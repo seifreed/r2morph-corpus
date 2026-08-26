@@ -43,4 +43,14 @@ jobs:
           PY
           sample="build/$(cat selected-sample)"
           python scripts/differential_run.py "$sample" "$sample" --output differential.json
-          grep -q '"equivalent": true' differential.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path("differential.json").read_text())
+          if report["equivalent"] is not True:
+              raise SystemExit("differential comparison failed")
+          if not isinstance(report["size_delta"], int):
+              raise SystemExit("size delta missing")
+          if not all(isinstance(report[name]["binary_size"], int) for name in ("original", "transformed")):
+              raise SystemExit("binary size evidence missing")
+          PY

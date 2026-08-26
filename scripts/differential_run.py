@@ -29,6 +29,7 @@ def run_binary(binary: Path, directory: Path) -> dict[str, Any]:
     started = time.perf_counter()
     completed = subprocess.run([str(binary)], cwd=directory, capture_output=True, timeout=10, check=False)
     return {
+        "binary_size": binary.stat().st_size,
         "returncode": completed.returncode,
         "stdout_sha256": digest_bytes(completed.stdout),
         "stderr_sha256": digest_bytes(completed.stderr),
@@ -61,6 +62,7 @@ def compare(original: Path, transformed: Path) -> dict[str, Any]:
             key: value for key, value in transformed_result["files"].items() if key not in transformed_before
         }
         return {
+            "size_delta": transformed.stat().st_size - original.stat().st_size,
             "equivalent": (
                 original_result["returncode"] == transformed_result["returncode"]
                 and original_result["stdout_sha256"] == transformed_result["stdout_sha256"]
