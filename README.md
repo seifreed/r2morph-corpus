@@ -10,20 +10,20 @@ exceptions.
 
 Build the available matrix:
 
-```bash
-python scripts/build_corpus.py --output build
-```
+    python scripts/build_corpus.py --output build
 
 Missing compilers and unavailable static linkers are explicit omissions in
-`build/manifest.json`. Reports contain source/binary SHA-256 values, commands,
+build/manifest.json. Reports contain source/binary SHA-256 values, commands,
 tool versions, statuses, durations, output digests, and sizes. Raw process
 output is not retained.
 
-Compare original and transformed executables:
+Transform one built sample and compare it with the original:
 
-```bash
-python scripts/differential_run.py original transformed --output result.json
-```
+    python scripts/transform_sample.py build/<sample> transformed/program --output transformation.json
+    python scripts/differential_run.py build/<sample> transformed/program --output differential.json
 
-The differential result compares exit code, stdout, stderr, files created,
-binary sizes, and size delta in isolated working directories.
+The transformation report records applied, omitted, or error and includes a
+bounded reason for omissions. The differential result compares exit code,
+stdout, stderr, files created, binary sizes, and size delta in isolated working
+directories. An omitted pass is still a measured corpus result; it is not
+silently treated as a successful transformation.
