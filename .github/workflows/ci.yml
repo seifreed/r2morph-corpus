@@ -59,5 +59,9 @@ jobs:
               raise SystemExit(f"differential failures: {report['failed_samples']}")
           if report["passed_samples"] != built:
               raise SystemExit("not every built sample passed")
+          required_decompilers = {"ida_pro", "ghidra", "binary_ninja"}
+          for record in report["records"]:
+              if set(record["decompiler_effectiveness"]) != required_decompilers:
+                  raise SystemExit("missing decompiler evidence fields")
           print(f"differential samples: {report['passed_samples']}")
           PY

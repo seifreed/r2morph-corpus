@@ -11,6 +11,23 @@ from differential_run import compare
 from transform_sample import transform
 
 
+def _decompiler_effectiveness() -> dict[str, dict[str, str]]:
+    return {
+        "ida_pro": {
+            "status": "omitted",
+            "reason": "licensed decompiler is not available in public CI",
+        },
+        "ghidra": {
+            "status": "omitted",
+            "reason": "decompiler runner is not available in public CI",
+        },
+        "binary_ninja": {
+            "status": "omitted",
+            "reason": "licensed decompiler is not available in public CI",
+        },
+    }
+
+
 def _sample_path(build_root: Path, sample_id: object) -> Path:
     if not isinstance(sample_id, str):
         raise ValueError("built record has no string id")
@@ -34,6 +51,7 @@ def _run_sample(build_root: Path, output_root: Path, record: dict[str, Any], see
         "symbols": record.get("symbols"),
         "link": record.get("link"),
         "transformation": transformation,
+        "decompiler_effectiveness": _decompiler_effectiveness(),
     }
     if transformation["status"] == "error":
         result["status"] = "error"
