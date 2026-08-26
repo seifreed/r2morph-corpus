@@ -17,13 +17,13 @@ build/manifest.json. Reports contain source/binary SHA-256 values, commands,
 tool versions, statuses, durations, output digests, and sizes. Raw process
 output is not retained.
 
-Transform one built sample and compare it with the original:
+Run the transformation and differential contract for every built sample:
 
-    python scripts/transform_sample.py build/<sample> transformed/program --output transformation.json
-    python scripts/differential_run.py build/<sample> transformed/program --output differential.json
+    python scripts/run_matrix.py --build build --output results --seed 20260826
 
-The transformation report records applied, omitted, or error and includes a
-bounded reason for omissions. The differential result compares exit code,
-stdout, stderr, files created, binary sizes, and size delta in isolated working
-directories. An omitted pass is still a measured corpus result; it is not
-silently treated as a successful transformation.
+results/matrix.json contains one bounded record per built sample. Each record
+includes the transformation status, omission reason when applicable, native
+exit code, stdout and stderr digests, created-file hashes, binary sizes, size
+delta, and the final equivalence result. A transformation error or divergent
+observable fails the matrix; an explicit omission is measured and remains
+visible instead of being treated as a successful transformation.

@@ -26,7 +26,7 @@ jobs:
       - name: Install r2morph runtime
         run: |
           python -m pip install --upgrade pip
-          python -m pip install             "r2pipe>=1.9.0"             "capstone>=5.0.0"             "keystone-engine>=0.9.2"             "pydantic>=2.0.0"             "rich>=13.0.0"             "typer>=0.9.0"             "pyyaml>=6.0.0"
+          python -m pip install             "r2pipe>=1.9.0"             "capstone>=5.0.0"             "keystone-engine>=0.9.2"             "pydantic>=2.0.0"             "rich>=13.0.0"             "typer>=0.9.0"             "pyyaml>=6.0.0"             "pytest>=7.4.0"
           python -m pip install --no-deps             "git+https://github.com/seifreed/r2morph.git@main"
       - name: Validate scripts
         run: python -m compileall -q scripts
@@ -43,38 +43,21 @@ jobs:
               raise SystemExit("compiler matrix produced no samples")
           print(f"built samples: {len(built)}")
           PY
-      - name: Transform and compare a built sample
+      - name: Transform and compare every built sample
+        run: python scripts/run_matrix.py --build build --output results --seed 20260826
+      - name: Validate full differential matrix
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          sample = next(row for row in json.loads(Path("build/manifest.json").read_text())["records"] if row["status"] == "built")
-          Path("selected-sample").write_text(sample["id"])
-          PY
-          sample="build/$(cat selected-sample)"
-          mkdir -p transformed
-          python scripts/transform_sample.py "$sample" transformed/program             --output transformation.json
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          result = json.loads(Path("transformation.json").read_text())
-          if result["status"] not in {"applied", "omitted"}:
-              raise SystemExit(f"unexpected transformation status: {result}")
-          if result["status"] == "omitted" and not result.get("reason"):
-              raise SystemExit("omitted transformation must include a reason")
-          PY
-          python scripts/differential_run.py "$sample" transformed/program --output differential.json
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          transformation = json.loads(Path("transformation.json").read_text())
-          report = json.loads(Path("differential.json").read_text())
-          if report["equivalent"] is not True:
-              raise SystemExit("differential comparison failed")
-          if not isinstance(report["size_delta"], int):
-              raise SystemExit("size delta missing")
-          if not all(isinstance(report[name]["binary_size"], int) for name in ("original", "transformed")):
-              raise SystemExit("binary size evidence missing")
-          print(f"transformation: {transformation['status']}")
-          print(f"size delta: {report['size_delta']}")
+          manifest = json.loads(Path("build/manifest.json").read_text())
+          report = json.loads(Path("results/matrix.json").read_text())
+          built = sum(row["status"] == "built" for row in manifest["records"])
+          if report["built_samples"] != built:
+              raise SystemExit("matrix does not cover every built sample")
+          if report["failed_samples"] != 0:
+              raise SystemExit(f"differential failures: {report['failed_samples']}")
+          if report["passed_samples"] != built:
+              raise SystemExit("not every built sample passed")
+          print(f"differential samples: {report['passed_samples']}")
           PY
