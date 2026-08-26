@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "target": {"os": "linux", "format": "ELF", "architecture": "x86-64"},
+  "compilers": ["gcc", "clang"],
+  "languages": ["c", "c++"],
+  "optimizations": ["O0", "O1", "O2", "O3", "Os"],
+  "pie_modes": ["pie", "non-pie"],
+  "symbol_modes": ["symbols", "stripped"],
+  "link_modes": ["dynamic", "static"],
+  "sources": [
+    {"name": "control_flow.c", "language": "c", "features": ["switch", "loops", "recursion", "pointers", "tls"]},
+    {"name": "exceptions.cpp", "language": "c++", "features": ["recursion", "pointers", "exceptions"]}
+  ]
+}
