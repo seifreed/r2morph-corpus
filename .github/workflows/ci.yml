@@ -17,7 +17,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y git build-essential pkg-config clang g++ wget
+          sudo apt-get install -y git build-essential pkg-config clang g++ wget cmake
       - name: Install radare2
         run: |
           git clone --depth 1 https://github.com/radareorg/radare2.git /tmp/radare2
