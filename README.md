@@ -25,5 +25,5 @@ Compare original and transformed executables:
 python scripts/differential_run.py original transformed --output result.json
 ```
 
-The differential result compares exit code, stdout, stderr, and files created
-in isolated working directories.
+The differential result compares exit code, stdout, stderr, files created,
+binary sizes, and size delta in isolated working directories.
