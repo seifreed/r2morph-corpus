@@ -82,6 +82,7 @@ jobs:
           if set(benchmark["optional_runners"]) != required_omissions:
               raise SystemExit("optional runner evidence fields are incomplete")
           print(f"static recovery samples: {benchmark['measured_samples']}")
+          PY
       - name: Upload corpus evidence
         uses: actions/upload-artifact@v4
         with:
@@ -91,4 +92,3 @@ jobs:
             results/matrix.json
             results/tools.json
           retention-days: 90
-          PY
