@@ -64,6 +64,11 @@ jobs:
           for record in report["records"]:
               if set(record["decompiler_effectiveness"]) != required_decompilers:
                   raise SystemExit("missing decompiler evidence fields")
+              differential = record.get("differential", {})
+              if differential.get("inputs") != [4, 6, 8, -10, -9]:
+                  raise SystemExit("differential input set is incomplete")
+              if len(differential.get("cases", [])) != 5:
+                  raise SystemExit("differential case evidence is incomplete")
           print(f"differential samples: {report['passed_samples']}")
       - name: Run static recovery benchmark
         run: python scripts/tool_benchmark.py --build build --matrix results/matrix.json --output results/tools.json

@@ -24,12 +24,14 @@ Run the transformation and differential contract for every built sample:
 results/matrix.json contains one bounded record per built sample. Each record
 includes the transformation status, omission reason when applicable, native
 exit code, stdout and stderr digests, created-file hashes, binary sizes, size
-delta, and the final equivalence result. A transformation error or divergent
+delta, and the final equivalence result for five deterministic command-line
+inputs generated from the matrix seed. A transformation error or divergent
 observable fails the matrix; an explicit omission is measured and remains
-visible instead of being treated as a successful transformation. Each record also
-contains explicit decompiler-effectiveness entries for IDA Pro, Ghidra, and
-Binary Ninja. They are currently recorded as omitted because those runners are
-not available in public CI; no decompiler effectiveness claim is made.
+visible instead of being treated as a successful transformation. Each record
+also contains the per-input original/transformed observables and explicit
+decompiler-effectiveness entries for IDA Pro, Ghidra, and Binary Ninja. They are
+currently recorded as omitted because those runners are not available in public
+CI; no decompiler effectiveness claim is made.
 
 Run the independent static-recovery benchmark after the differential matrix:
 

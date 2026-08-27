@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from differential_run import compare
+from differential_run import compare, generated_inputs
 from transform_sample import transform
 
 
@@ -37,7 +37,9 @@ def _sample_path(build_root: Path, sample_id: object) -> Path:
     return build_root / relative
 
 
-def _run_sample(build_root: Path, output_root: Path, record: dict[str, Any], seed: int) -> dict[str, Any]:
+def _run_sample(
+    build_root: Path, output_root: Path, record: dict[str, Any], seed: int
+) -> dict[str, Any]:
     sample_id = record["id"]
     source = _sample_path(build_root, sample_id)
     transformed = output_root / "transformed" / str(sample_id)
@@ -58,7 +60,7 @@ def _run_sample(build_root: Path, output_root: Path, record: dict[str, Any], see
         return result
 
     try:
-        differential = compare(source, transformed)
+        differential = compare(source, transformed, generated_inputs(seed))
     except Exception as error:  # The matrix records per-sample evidence failures.
         result["status"] = "error"
         result["error_type"] = type(error).__name__
@@ -75,7 +77,11 @@ def _run_sample(build_root: Path, output_root: Path, record: dict[str, Any], see
 def run_matrix(build_root: Path, output_root: Path, seed: int) -> dict[str, Any]:
     manifest = json.loads((build_root / "manifest.json").read_text(encoding="utf-8"))
     records = manifest.get("records", [])
-    built = [record for record in records if isinstance(record, dict) and record.get("status") == "built"]
+    built = [
+        record
+        for record in records
+        if isinstance(record, dict) and record.get("status") == "built"
+    ]
     output_root.mkdir(parents=True, exist_ok=True)
     results = [_run_sample(build_root, output_root, record, seed) for record in built]
     failed_records = [
@@ -105,7 +111,9 @@ def main() -> int:
     args = parser.parse_args()
 
     result = run_matrix(args.build, args.output, args.seed)
-    (args.output / "matrix.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    (args.output / "matrix.json").write_text(
+        json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     print(
         json.dumps(
             {

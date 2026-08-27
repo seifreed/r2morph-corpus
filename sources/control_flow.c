@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 static _Thread_local int tls_bias = 3;
 
@@ -16,8 +17,9 @@ static int select_value(int value) {
     }
 }
 
-int main(void) {
-    int values[] = {2, 5, 8, 11};
+int main(int argc, char **argv) {
+    int input = argc > 1 ? atoi(argv[1]) : 0;
+    int values[] = {2 + input, 5 - input, 8 + input, 11 - input};
     int *cursor = values;
     int total = tls_bias;
     for (int index = 0; index < 4; ++index) {

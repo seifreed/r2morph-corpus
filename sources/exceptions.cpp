@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdexcept>
+#include <cstdlib>
 
 static int recurse(int value) {
     if (value <= 1) return value;
@@ -11,9 +12,10 @@ static int checked(int value) {
     return value * 3 + recurse(value % 5);
 }
 
-int main() {
+int main(int argc, char **argv) {
     try {
-        int values[] = {1, 4, 7};
+        int input = argc > 1 ? std::atoi(argv[1]) : 0;
+        int values[] = {1 + input, 4, 7};
         int *cursor = values;
         int total = 0;
         for (int index = 0; index < 3; ++index) total += checked(cursor[index]);
