@@ -83,6 +83,13 @@ jobs:
               raise SystemExit("optional runner evidence fields are incomplete")
           print(f"static recovery samples: {benchmark['measured_samples']}")
           PY
+      - name: Validate malformed ELF corpus
+        run: |
+          sample=$(find build -type f -perm -u+x | sort | head -n 1)
+          test -n "$sample"
+          python scripts/malformed_corpus.py \
+            --sample "$sample" \
+            --output results/malformed.json
       - name: Upload corpus evidence
         uses: actions/upload-artifact@v4
         with:
@@ -91,4 +98,5 @@ jobs:
             build/manifest.json
             results/matrix.json
             results/tools.json
+            results/malformed.json
           retention-days: 90

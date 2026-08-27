@@ -42,3 +42,8 @@ explicitly omitted. The command fails if the configured analyzer cannot measure
 every passed sample. Public workflow runs retain `build/manifest.json`,
 `results/matrix.json`, and `results/tools.json` as a downloadable evidence
 artifact.
+
+The malformed corpus command derives deterministic truncated, invalid-header,
+and arbitrary-byte ELF samples from one built sample. It runs the real
+`ELFHandler` against every sample and fails closed if any malformed input is
+accepted as valid. The report stores only hashes, sizes, and validation flags.
