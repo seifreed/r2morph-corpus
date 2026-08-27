@@ -65,4 +65,21 @@ jobs:
               if set(record["decompiler_effectiveness"]) != required_decompilers:
                   raise SystemExit("missing decompiler evidence fields")
           print(f"differential samples: {report['passed_samples']}")
+      - name: Run static recovery benchmark
+        run: python scripts/tool_benchmark.py --build build --matrix results/matrix.json --output results/tools.json
+      - name: Validate static recovery benchmark
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path("results/matrix.json").read_text())
+          benchmark = json.loads(Path("results/tools.json").read_text())
+          if benchmark["status"] != "passed":
+              raise SystemExit("static recovery benchmark did not pass")
+          if benchmark["measured_samples"] != report["passed_samples"]:
+              raise SystemExit("static recovery benchmark does not cover every passed sample")
+          required_omissions = {"ida_pro", "ghidra", "binary_ninja", "angr", "triton"}
+          if set(benchmark["optional_runners"]) != required_omissions:
+              raise SystemExit("optional runner evidence fields are incomplete")
+          print(f"static recovery samples: {benchmark['measured_samples']}")
           PY

@@ -30,3 +30,13 @@ visible instead of being treated as a successful transformation. Each record als
 contains explicit decompiler-effectiveness entries for IDA Pro, Ghidra, and
 Binary Ninja. They are currently recorded as omitted because those runners are
 not available in public CI; no decompiler effectiveness claim is made.
+
+Run the independent static-recovery benchmark after the differential matrix:
+
+    python scripts/tool_benchmark.py --build build --matrix results/matrix.json --output results/tools.json
+
+The benchmark runs `radare2` over every passed original/transformed pair and
+records function, basic-block, edge, instruction, and duration deltas without
+retaining raw analyzer output. Licensed or unconfigured analyzers remain
+explicitly omitted. The command fails if the configured analyzer cannot measure
+every passed sample.
