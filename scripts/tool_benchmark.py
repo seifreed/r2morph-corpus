@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import signal
 import shutil
 import subprocess
 import time
@@ -12,6 +14,7 @@ from typing import Any
 
 _MAX_SAMPLES = 4096
 _MAX_ERROR_LENGTH = 240
+_ANALYZER_TIMEOUT_SECONDS = 30
 
 
 def _safe_sample_path(build_root: Path, sample_id: object) -> Path:
@@ -47,18 +50,28 @@ def _parse_function_json(output: bytes) -> object:
     return json.loads(text[start : end + 1])
 
 
+def _run_analyzer(executable: Path, analyzer: str) -> bytes:
+    process = subprocess.Popen(
+        [analyzer, "-2", "-q", "-c", "aa; aflj; q", str(executable)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        start_new_session=True,
+    )
+    try:
+        stdout, _stderr = process.communicate(timeout=_ANALYZER_TIMEOUT_SECONDS)
+    except subprocess.TimeoutExpired as error:
+        os.killpg(process.pid, signal.SIGKILL)
+        process.communicate()
+        raise RuntimeError("static analyzer timed out") from error
+    if process.returncode != 0:
+        raise RuntimeError(f"analyzer exited with {process.returncode}")
+    return stdout
+
+
 def _analyze(executable: Path, analyzer: str) -> dict[str, Any]:
     started = time.perf_counter()
     try:
-        completed = subprocess.run(
-            [analyzer, "-2", "-q", "-c", "aaa; aflj; q", str(executable)],
-            capture_output=True,
-            timeout=120,
-            check=False,
-        )
-        if completed.returncode != 0:
-            raise RuntimeError(f"analyzer exited with {completed.returncode}")
-        metrics = _metrics(_parse_function_json(completed.stdout))
+        metrics = _metrics(_parse_function_json(_run_analyzer(executable, analyzer)))
     except (OSError, RuntimeError, ValueError, json.JSONDecodeError) as error:
         return {
             "status": "error",
