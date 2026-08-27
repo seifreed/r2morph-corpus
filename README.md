@@ -39,4 +39,6 @@ The benchmark runs `radare2` over every passed original/transformed pair and
 records function, basic-block, edge, instruction, and duration deltas without
 retaining raw analyzer output. Licensed or unconfigured analyzers remain
 explicitly omitted. The command fails if the configured analyzer cannot measure
-every passed sample.
+every passed sample. Public workflow runs retain `build/manifest.json`,
+`results/matrix.json`, and `results/tools.json` as a downloadable evidence
+artifact.

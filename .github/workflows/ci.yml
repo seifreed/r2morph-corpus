@@ -82,4 +82,13 @@ jobs:
           if set(benchmark["optional_runners"]) != required_omissions:
               raise SystemExit("optional runner evidence fields are incomplete")
           print(f"static recovery samples: {benchmark['measured_samples']}")
+      - name: Upload corpus evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: corpus-evidence-${{ github.sha }}
+          path: |
+            build/manifest.json
+            results/matrix.json
+            results/tools.json
+          retention-days: 90
           PY
