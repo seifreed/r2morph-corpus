@@ -13,7 +13,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-DEFAULT_INPUTS = (-11, -3, 0, 7, 13)
+DEFAULT_INPUTS = (-64, -11, -3, 0, 1, 7, 13, 31, 64)
 
 
 def digest_bytes(value: bytes) -> str:
@@ -22,7 +22,9 @@ def digest_bytes(value: bytes) -> str:
 
 def generated_inputs(seed: int) -> tuple[int, ...]:
     generator = random.Random(seed)
-    return tuple(generator.randint(-11, 13) for _ in range(5))
+    inputs = list(DEFAULT_INPUTS)
+    generator.shuffle(inputs)
+    return tuple(inputs)
 
 
 def snapshot(directory: Path) -> dict[str, str]:

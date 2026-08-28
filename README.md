@@ -29,9 +29,10 @@ isolated result for each pass. The default pass set is
 `--passes` to select a subset. Each pass result includes the transformation
 status, omission reason when applicable, native exit code, stdout and stderr
 digests, created-file hashes, binary sizes, size delta, and the final
-equivalence result for five deterministic command-line inputs generated from
-the matrix seed. A transformation error or divergent observable fails that
-pass and the matrix; an explicit omission is measured and remains visible.
+equivalence result for nine deterministic command-line inputs, including
+negative, zero, positive, and wider boundary values, generated from the matrix
+seed. A transformation error or divergent observable fails that pass and the
+matrix; an explicit omission is measured and remains visible.
 `pass_summary` aggregates sample coverage, applied/omitted/error counts,
 applied units, and differential results for every selected pass. Each sample
 also contains explicit decompiler-effectiveness entries for IDA Pro, Ghidra,

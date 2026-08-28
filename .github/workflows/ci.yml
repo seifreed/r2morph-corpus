@@ -83,7 +83,7 @@ jobs:
               for pass_name in required_passes:
                   pass_result = record.get("passes", {}).get(pass_name, {})
                   differential = pass_result.get("differential", {})
-                  if differential.get("inputs") != [4, 6, 8, -10, -9]:
+                  if differential.get("inputs") != [0, 7, 1, -11, -3, 64, 13, -64, 31]:
                       raise SystemExit(f"differential input set is incomplete: {pass_name}")
                   if len(differential.get("cases", [])) != 5:
                       raise SystemExit(f"differential case evidence is incomplete: {pass_name}")
