@@ -40,6 +40,10 @@ def test_build_matrix_declares_avx128_compiler_flags() -> None:
     assert SOURCE_FLAGS["avx128.c"] == ("-mavx",)
 
 
+def test_build_matrix_declares_avx128_integer_compiler_flags() -> None:
+    assert SOURCE_FLAGS["avx128_integer.c"] == ("-mavx2",)
+
+
 def test_generated_inputs_cover_boundaries_deterministically() -> None:
     assert generated_inputs(20260826) == (0, 7, 1, -11, -3, 64, 13, -64, 31)
 

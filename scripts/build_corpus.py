@@ -22,8 +22,9 @@ SOURCE_SPECS = (
     ("exceptions.cpp", "c++"),
     ("vector_abi.c", "c"),
     ("avx128.c", "c"),
+    ("avx128_integer.c", "c"),
 )
-SOURCE_FLAGS = {"avx128.c": ("-mavx",)}
+SOURCE_FLAGS = {"avx128.c": ("-mavx",), "avx128_integer.c": ("-mavx2",)}
 _ELF_MAGIC = b"\x7fELF"
 _ELF_CLASS_64 = 2
 _ELF_DATA_LSB = 1
