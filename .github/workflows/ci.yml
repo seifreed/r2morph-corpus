@@ -44,7 +44,7 @@ jobs:
               raise SystemExit("compiler matrix produced no samples")
           print(f"built samples: {len(built)}")
           PY
-      - name: Transform and compare every built sample
+      - name: Transform and compare every built sample and pass
         run: python scripts/run_matrix.py --build build --output results --seed 20260826
       - name: Validate full differential matrix
         run: |
@@ -60,6 +60,21 @@ jobs:
               raise SystemExit(f"differential failures: {report['failed_samples']}")
           if report["passed_samples"] != built:
               raise SystemExit("not every built sample passed")
+          required_passes = {
+              "BlockReordering",
+              "CodeVirtualization",
+              "InstructionExpansion",
+              "InstructionSubstitution",
+              "NopInsertion",
+              "RegisterSubstitution",
+          }
+          if set(report["passes"]) != required_passes:
+              raise SystemExit("pass matrix is incomplete")
+          if set(report["pass_summary"]) != required_passes:
+              raise SystemExit("per-pass summary is incomplete")
+          for pass_name, summary in report["pass_summary"].items():
+              if summary["samples"] != built or summary["differential_failed"] != 0:
+                  raise SystemExit(f"pass coverage failed: {pass_name}")
           required_decompilers = {"ida_pro", "ghidra", "binary_ninja"}
           for record in report["records"]:
               if set(record["decompiler_effectiveness"]) != required_decompilers:
@@ -81,8 +96,14 @@ jobs:
           benchmark = json.loads(Path("results/tools.json").read_text())
           if benchmark["status"] != "passed":
               raise SystemExit("static recovery benchmark did not pass")
-          if benchmark["measured_samples"] != report["passed_samples"]:
-              raise SystemExit("static recovery benchmark does not cover every passed sample")
+          expected_measurements = sum(
+              summary["differential_passed"] for summary in report["pass_summary"].values()
+          )
+          if benchmark["measured_samples"] != expected_measurements:
+              raise SystemExit("static recovery benchmark does not cover every passed sample and pass")
+          for pass_name, summary in benchmark["pass_summary"].items():
+              if summary["measured_samples"] + summary["failed_samples"] != summary["samples"]:
+                  raise SystemExit(f"static recovery benchmark is incomplete: {pass_name}")
           required_omissions = {"ida_pro", "ghidra", "binary_ninja", "angr", "triton"}
           if set(benchmark["optional_runners"]) != required_omissions:
               raise SystemExit("optional runner evidence fields are incomplete")

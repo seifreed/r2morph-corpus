@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import shutil
+import struct
 import subprocess
 import time
 from itertools import product
@@ -17,6 +18,11 @@ PIE_MODES = ("pie", "non-pie")
 SYMBOL_MODES = ("symbols", "stripped")
 LINK_MODES = ("dynamic", "static")
 SOURCE_SPECS = (("control_flow.c", "c"), ("exceptions.cpp", "c++"))
+_ELF_MAGIC = b"\x7fELF"
+_ELF_CLASS_64 = 2
+_ELF_DATA_LSB = 1
+_EM_X86_64 = 62
+_ELF_HEADER_PREFIX_BYTES = 20
 
 
 def digest(path: Path) -> str:
@@ -29,6 +35,15 @@ def digest(path: Path) -> str:
 
 def output_digest(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
+
+
+def is_linux_elf_x86_64(path: Path) -> bool:
+    header = path.read_bytes()[:_ELF_HEADER_PREFIX_BYTES]
+    if len(header) < _ELF_HEADER_PREFIX_BYTES or header[:4] != _ELF_MAGIC:
+        return False
+    if header[4] != _ELF_CLASS_64 or header[5] != _ELF_DATA_LSB:
+        return False
+    return struct.unpack_from("<H", header, 18)[0] == _EM_X86_64
 
 
 def compiler_for(language: str, candidate: str) -> str:
@@ -64,10 +79,12 @@ def build_one(command: list[str], output: Path, source_hash: str, metadata: dict
             "duration_seconds": round(time.perf_counter() - started, 6),
         }
     )
-    if completed.returncode == 0 and output.exists():
-        record.update({"status": "built", "sha256": digest(output), "size": output.stat().st_size})
-    else:
+    if completed.returncode != 0 or not output.exists():
         record.update({"status": "omitted", "reason": "compiler failed or output missing"})
+    elif not is_linux_elf_x86_64(output):
+        record.update({"status": "omitted", "reason": "compiler output is not Linux ELF x86-64"})
+    else:
+        record.update({"status": "built", "sha256": digest(output), "size": output.stat().st_size})
     return record
 
 

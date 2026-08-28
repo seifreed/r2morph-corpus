@@ -17,33 +17,39 @@ build/manifest.json. Reports contain source/binary SHA-256 values, commands,
 tool versions, statuses, durations, output digests, and sizes. Raw process
 output is not retained.
 
-Run the transformation and differential contract for every built sample:
+Run the transformation and differential contract for every built sample and
+the selected Tier 1 passes:
 
     python scripts/run_matrix.py --build build --output results --seed 20260826
 
-results/matrix.json contains one bounded record per built sample. Each record
-includes the transformation status, omission reason when applicable, native
-exit code, stdout and stderr digests, created-file hashes, binary sizes, size
-delta, and the final equivalence result for five deterministic command-line
-inputs generated from the matrix seed. A transformation error or divergent
-observable fails the matrix; an explicit omission is measured and remains
-visible instead of being treated as a successful transformation. Each record
-also contains the per-input original/transformed observables and explicit
-decompiler-effectiveness entries for IDA Pro, Ghidra, and Binary Ninja. They are
-currently recorded as omitted because those runners are not available in public
-CI; no decompiler effectiveness claim is made.
+results/matrix.json contains one bounded record per built sample, with an
+isolated result for each pass. The default pass set is
+`BlockReordering`, `CodeVirtualization`, `InstructionExpansion`,
+`InstructionSubstitution`, `NopInsertion`, and `RegisterSubstitution`; use
+`--passes` to select a subset. Each pass result includes the transformation
+status, omission reason when applicable, native exit code, stdout and stderr
+digests, created-file hashes, binary sizes, size delta, and the final
+equivalence result for five deterministic command-line inputs generated from
+the matrix seed. A transformation error or divergent observable fails that
+pass and the matrix; an explicit omission is measured and remains visible.
+`pass_summary` aggregates sample coverage, applied/omitted/error counts,
+applied units, and differential results for every selected pass. Each sample
+also contains explicit decompiler-effectiveness entries for IDA Pro, Ghidra,
+and Binary Ninja. They are currently recorded as omitted because those runners
+are not available in public CI; no decompiler effectiveness claim is made.
 
 Run the independent static-recovery benchmark after the differential matrix:
 
     python scripts/tool_benchmark.py --build build --matrix results/matrix.json --output results/tools.json
 
-The benchmark runs `radare2` over every passed original/transformed pair and
-records function, basic-block, edge, instruction, and duration deltas without
-retaining raw analyzer output. Licensed or unconfigured analyzers remain
-explicitly omitted. The command fails if the configured analyzer cannot measure
-every passed sample. Public workflow runs retain `build/manifest.json`,
-`results/matrix.json`, and `results/tools.json` as a downloadable evidence
-artifact.
+The benchmark runs `radare2` over every passed original/transformed pair for
+every pass and records function, basic-block, edge, instruction, and duration
+deltas without retaining raw analyzer output. `results/tools.json` includes a
+per-pass summary and one measurement row per sample/pass pair. Licensed or
+unconfigured analyzers remain explicitly omitted. The command fails if the
+configured analyzer cannot measure every passed sample/pass pair. Public
+workflow runs retain `build/manifest.json`, `results/matrix.json`, and
+`results/tools.json` as a downloadable evidence artifact.
 
 The malformed corpus command derives deterministic truncated, invalid-header,
 and arbitrary-byte ELF samples from one built sample. It runs the real

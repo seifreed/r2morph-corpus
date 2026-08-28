@@ -96,14 +96,15 @@ def _measure_sample(
     output_root: Path,
     record: dict[str, Any],
     analyzer: str,
+    pass_name: str,
 ) -> dict[str, Any]:
     sample_id = record.get("id")
     original = _safe_sample_path(build_root, sample_id)
-    transformed = _safe_sample_path(output_root / "transformed", sample_id)
+    transformed = _safe_sample_path(output_root / "transformed" / pass_name, sample_id)
     original_metrics = _analyze(original, analyzer)
     transformed_metrics = _analyze(transformed, analyzer)
     status = "measured" if original_metrics["status"] == transformed_metrics["status"] == "measured" else "error"
-    result: dict[str, Any] = {"id": sample_id, "status": status}
+    result: dict[str, Any] = {"id": sample_id, "pass_name": pass_name, "status": status}
     result["original"] = original_metrics
     result["transformed"] = transformed_metrics
     if status == "error":
@@ -118,29 +119,46 @@ def _measure_sample(
 
 def benchmark(build_root: Path, matrix_path: Path, output_root: Path) -> dict[str, Any]:
     matrix = json.loads(matrix_path.read_text(encoding="utf-8"))
-    records = [record for record in matrix.get("records", []) if record.get("status") == "passed"]
+    records = [record for record in matrix.get("records", []) if isinstance(record, dict)]
+    pass_records = [
+        (record, pass_name)
+        for record in records
+        for pass_name, result in record.get("passes", {}).items()
+        if isinstance(result, dict) and result.get("status") == "passed"
+    ]
+    pass_names = tuple(matrix.get("passes", ()))
     analyzer = shutil.which("r2")
     if analyzer is None:
         return {
             "schema_version": 1,
             "status": "omitted",
             "reason": "radare2 executable is unavailable",
-            "samples": len(records),
+            "samples": len(pass_records),
             "measured_samples": 0,
             "failed_samples": 0,
             "measurements": [],
+            "pass_summary": {name: {"samples": 0, "measured_samples": 0, "failed_samples": 0} for name in pass_names},
             "optional_runners": _optional_runner_status(),
         }
-    selected = records[:_MAX_SAMPLES]
-    measurements = [_measure_sample(build_root, output_root, record, analyzer) for record in selected]
+    selected = pass_records[:_MAX_SAMPLES]
+    measurements = [_measure_sample(build_root, output_root, record, analyzer, pass_name) for record, pass_name in selected]
     failed = sum(result["status"] == "error" for result in measurements)
+    pass_summary = {
+        name: {
+            "samples": sum(pass_name == name for _, pass_name in selected),
+            "measured_samples": sum(result["status"] == "measured" and result["pass_name"] == name for result in measurements),
+            "failed_samples": sum(result["status"] == "error" and result["pass_name"] == name for result in measurements),
+        }
+        for name in pass_names
+    }
     return {
         "schema_version": 1,
-        "status": "passed" if failed == 0 and len(selected) == len(records) else "error",
+        "status": "passed" if failed == 0 and len(selected) == len(pass_records) else "error",
         "analyzer": "radare2",
-        "samples": len(records),
+        "samples": len(pass_records),
         "measured_samples": len(measurements) - failed,
         "failed_samples": failed,
+        "pass_summary": pass_summary,
         "measurements": measurements,
         "optional_runners": _optional_runner_status(),
     }
