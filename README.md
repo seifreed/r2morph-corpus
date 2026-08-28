@@ -5,8 +5,8 @@ ELF x86-64 C and C++ programs with GCC and Clang across -O0, -O1, -O2, -O3,
 and -Os, PIE and non-PIE, symbols and stripped outputs, and dynamic/static
 linking when available.
 
-The sources exercise switch dispatch, loops, recursion, pointers, TLS, and C++
-exceptions.
+The sources exercise switch dispatch, loops, recursion, pointers, TLS, C++
+exceptions, 128-bit SIMD, indirect calls, and variadic ABI handling.
 
 Build the available matrix:
 

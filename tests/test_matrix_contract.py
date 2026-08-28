@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
-from scripts.build_corpus import is_linux_elf_x86_64
+from scripts.build_corpus import SOURCE_SPECS, is_linux_elf_x86_64
 from scripts.differential_run import generated_inputs
 from scripts.run_matrix import _pass_summary, _wait_for_process, run_matrix
 
@@ -30,6 +30,10 @@ def test_build_matrix_rejects_non_linux_binary_header(tmp_path: Path) -> None:
     invalid.write_bytes(b"\xcf\xfa\xed\xfe" + bytes(16))
 
     assert not is_linux_elf_x86_64(invalid)
+
+
+def test_build_matrix_includes_vector_abi_source() -> None:
+    assert ("vector_abi.c", "c") in SOURCE_SPECS
 
 
 def test_generated_inputs_cover_boundaries_deterministically() -> None:

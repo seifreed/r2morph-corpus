@@ -9,6 +9,7 @@
   "link_modes": ["dynamic", "static"],
   "sources": [
     {"name": "control_flow.c", "language": "c", "features": ["switch", "loops", "recursion", "pointers", "tls"]},
-    {"name": "exceptions.cpp", "language": "c++", "features": ["recursion", "pointers", "exceptions"]}
+    {"name": "exceptions.cpp", "language": "c++", "features": ["recursion", "pointers", "exceptions"]},
+    {"name": "vector_abi.c", "language": "c", "features": ["128-bit SIMD", "indirect calls", "variadic ABI"]}
   ]
 }
