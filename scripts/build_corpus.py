@@ -17,7 +17,13 @@ OPTIMIZATIONS = ("O0", "O1", "O2", "O3", "Os")
 PIE_MODES = ("pie", "non-pie")
 SYMBOL_MODES = ("symbols", "stripped")
 LINK_MODES = ("dynamic", "static")
-SOURCE_SPECS = (("control_flow.c", "c"), ("exceptions.cpp", "c++"), ("vector_abi.c", "c"))
+SOURCE_SPECS = (
+    ("control_flow.c", "c"),
+    ("exceptions.cpp", "c++"),
+    ("vector_abi.c", "c"),
+    ("avx128.c", "c"),
+)
+SOURCE_FLAGS = {"avx128.c": ("-mavx",)}
 _ELF_MAGIC = b"\x7fELF"
 _ELF_CLASS_64 = 2
 _ELF_DATA_LSB = 1
@@ -52,8 +58,17 @@ def compiler_for(language: str, candidate: str) -> str:
     return candidate
 
 
-def compile_command(compiler: str, source: Path, output: Path, optimization: str, pie: str, link: str) -> list[str]:
+def compile_command(
+    compiler: str,
+    source: Path,
+    output: Path,
+    optimization: str,
+    pie: str,
+    link: str,
+    extra_flags: tuple[str, ...] = (),
+) -> list[str]:
     flags = [f"-{optimization}", "-g"]
+    flags.extend(extra_flags)
     flags.extend(["-fPIE", "-pie"] if pie == "pie" else ["-fno-pie", "-no-pie"])
     if link == "static":
         flags.append("-static")
@@ -112,7 +127,12 @@ def build_matrix(source_root: Path, output_root: Path) -> list[dict[str, Any]]:
             records.append({**metadata, "status": "omitted", "reason": "compiler unavailable"})
             continue
         metadata["compiler_version"] = version(compiler)
-        record = build_one(compile_command(compiler, source, output, optimization, pie, link), output, digest(source), metadata)
+        record = build_one(
+            compile_command(compiler, source, output, optimization, pie, link, SOURCE_FLAGS.get(source_name, ())),
+            output,
+            digest(source),
+            metadata,
+        )
         if record["status"] == "built" and symbols == "stripped":
             strip_tool = shutil.which("strip")
             if strip_tool is None:
