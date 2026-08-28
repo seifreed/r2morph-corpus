@@ -10,6 +10,7 @@ name: Corpus
 jobs:
   build-and-compare:
     runs-on: ubuntu-latest
+    timeout-minutes: 240
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -45,7 +46,7 @@ jobs:
           print(f"built samples: {len(built)}")
           PY
       - name: Transform and compare every built sample and pass
-        run: python scripts/run_matrix.py --build build --output results --seed 20260826 --workers 4
+        run: python scripts/run_matrix.py --build build --output results --seed 20260826 --workers 8
       - name: Validate full differential matrix
         run: |
           python - <<'PY'
