@@ -120,6 +120,7 @@ jobs:
             --output results/malformed.json
       - name: Upload corpus evidence
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: corpus-evidence-${{ github.sha }}
           path: |
