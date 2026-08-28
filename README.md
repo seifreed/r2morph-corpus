@@ -55,6 +55,17 @@ workflow runs publish the per-pass counters in the job summary and retain
 `build/manifest.json`, `results/matrix.json`, and `results/tools.json` as a
 downloadable evidence artifact.
 
+On a host with Ghidra headless installed, run the same complete benchmark with
+the local analyzer:
+
+    python scripts/tool_benchmark.py --analyzer ghidra --build build \
+        --matrix results/matrix.json --output results/ghidra.json
+
+The Ghidra report uses the same per-pass schema and runs each original and
+transformed binary in an isolated temporary project. Set
+`GHIDRA_ANALYZE_HEADLESS` or put `analyzeHeadless` on `PATH` when the executable
+is not installed in a standard location.
+
 The malformed corpus command derives deterministic truncated, invalid-header,
 and arbitrary-byte ELF samples from one built sample. It runs the real
 `ELFHandler` against every sample and fails closed if any malformed input is

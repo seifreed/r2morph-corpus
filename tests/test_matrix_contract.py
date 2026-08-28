@@ -8,6 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from scripts.build_corpus import SOURCE_FLAGS, SOURCE_SPECS, is_linux_elf_x86_64
 from scripts.differential_run import generated_inputs
 from scripts.run_matrix import _pass_summary, _wait_for_process, run_matrix
+from scripts.tool_benchmark import _metric_object
 
 
 def _write_elf_header(path: Path) -> None:
@@ -42,6 +43,17 @@ def test_build_matrix_declares_avx128_compiler_flags() -> None:
 
 def test_build_matrix_declares_avx128_integer_compiler_flags() -> None:
     assert SOURCE_FLAGS["avx128_integer.c"] == ("-mavx2",)
+
+
+def test_tool_benchmark_accepts_ghidra_metric_object() -> None:
+    assert _metric_object(
+        {"functions": 1, "basic_blocks": 2, "edges": 3, "instructions": 4}
+    ) == {
+        "functions": 1,
+        "basic_blocks": 2,
+        "edges": 3,
+        "instructions": 4,
+    }
 
 
 def test_generated_inputs_cover_boundaries_deterministically() -> None:
