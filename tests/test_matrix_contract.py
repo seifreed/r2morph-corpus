@@ -1,3 +1,4 @@
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -5,7 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
 from scripts.build_corpus import is_linux_elf_x86_64
-from scripts.run_matrix import _pass_summary, _wait_for_process
+from scripts.run_matrix import _pass_summary, _wait_for_process, run_matrix
 
 
 def _write_elf_header(path: Path) -> None:
@@ -89,3 +90,13 @@ def test_transform_timeout_terminates_a_real_process_group() -> None:
     )
     assert not _wait_for_process(process, 0.01)
     assert process.poll() is not None
+
+
+def test_run_matrix_accepts_bounded_worker_count(tmp_path: Path) -> None:
+    build = tmp_path / "build"
+    build.mkdir()
+    (build / "manifest.json").write_text(json.dumps({"records": []}), encoding="utf-8")
+
+    report = run_matrix(build, tmp_path / "results", 20260828, (), workers=2)
+
+    assert report["built_samples"] == 0

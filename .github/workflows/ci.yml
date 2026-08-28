@@ -45,7 +45,7 @@ jobs:
           print(f"built samples: {len(built)}")
           PY
       - name: Transform and compare every built sample and pass
-        run: python scripts/run_matrix.py --build build --output results --seed 20260826
+        run: python scripts/run_matrix.py --build build --output results --seed 20260826 --workers 4
       - name: Validate full differential matrix
         run: |
           python - <<'PY'

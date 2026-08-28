@@ -20,7 +20,7 @@ output is not retained.
 Run the transformation and differential contract for every built sample and
 the selected Tier 1 passes:
 
-    python scripts/run_matrix.py --build build --output results --seed 20260826
+    python scripts/run_matrix.py --build build --output results --seed 20260826 --workers 4
 
 results/matrix.json contains one bounded record per built sample, with an
 isolated result for each pass. The default pass set is
@@ -37,6 +37,8 @@ applied units, and differential results for every selected pass. Each sample
 also contains explicit decompiler-effectiveness entries for IDA Pro, Ghidra,
 and Binary Ninja. They are currently recorded as omitted because those runners
 are not available in public CI; no decompiler effectiveness claim is made.
+The runner processes up to four samples concurrently, while each individual
+transformation remains isolated in a bounded subprocess.
 
 Run the independent static-recovery benchmark after the differential matrix:
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 import json
 import os
 import signal
@@ -17,6 +18,7 @@ from transform_sample import PASS_TYPES
 DEFAULT_PASSES = tuple(sorted(PASS_TYPES))
 _TRANSFORM_TIMEOUT_SECONDS = 120
 _MAX_ERROR_LENGTH = 240
+_DEFAULT_WORKERS = 4
 
 
 def _decompiler_effectiveness() -> dict[str, dict[str, str]]:
@@ -192,7 +194,10 @@ def run_matrix(
     output_root: Path,
     seed: int,
     pass_names: tuple[str, ...] = DEFAULT_PASSES,
+    workers: int = _DEFAULT_WORKERS,
 ) -> dict[str, Any]:
+    if workers < 1:
+        raise ValueError("workers must be positive")
     manifest = json.loads((build_root / "manifest.json").read_text(encoding="utf-8"))
     records = manifest.get("records", [])
     built = [
@@ -201,7 +206,9 @@ def run_matrix(
         if isinstance(record, dict) and record.get("status") == "built"
     ]
     output_root.mkdir(parents=True, exist_ok=True)
-    results = [_run_sample(build_root, output_root, record, seed, pass_names) for record in built]
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        futures = [executor.submit(_run_sample, build_root, output_root, record, seed, pass_names) for record in built]
+        results = [future.result() for future in futures]
     failed_records = [
         {
             "id": result.get("id"),
@@ -234,9 +241,10 @@ def main() -> int:
     parser.add_argument("--output", type=Path, default=Path("results"))
     parser.add_argument("--seed", type=int, default=20260826)
     parser.add_argument("--passes", nargs="+", choices=sorted(PASS_TYPES), default=list(DEFAULT_PASSES))
+    parser.add_argument("--workers", type=int, default=_DEFAULT_WORKERS)
     args = parser.parse_args()
 
-    result = run_matrix(args.build, args.output, args.seed, tuple(args.passes))
+    result = run_matrix(args.build, args.output, args.seed, tuple(args.passes), args.workers)
     (args.output / "matrix.json").write_text(
         json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
