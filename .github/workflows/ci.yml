@@ -47,6 +47,35 @@ jobs:
           PY
       - name: Transform and compare every built sample and pass
         run: python scripts/run_matrix.py --build build --output results --seed 20260826 --workers 8
+      - name: Publish per-pass matrix summary
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          report_path = Path("results/matrix.json")
+          summary_path = os.environ["GITHUB_STEP_SUMMARY"]
+          if not report_path.exists():
+              Path(summary_path).write_text("## Corpus matrix\n\nMatrix report was not produced.\n", encoding="utf-8")
+          else:
+              report = json.loads(report_path.read_text(encoding="utf-8"))
+              lines = [
+                  "## Corpus matrix",
+                  "",
+                  f"Samples: {report['built_samples']}  |  Passed: {report['passed_samples']}  |  Failed: {report['failed_samples']}",
+                  "",
+                  "| Pass | Applied | Omitted | Errors | Differential passed | Differential failed |",
+                  "| --- | ---: | ---: | ---: | ---: | ---: |",
+              ]
+              for name, values in sorted(report["pass_summary"].items()):
+                  lines.append(
+                      f"| {name} | {values['applied']} | {values['omitted']} | {values['errors']} | "
+                      f"{values['differential_passed']} | {values['differential_failed']} |"
+                  )
+              Path(summary_path).write_text("\n".join(lines) + "\n", encoding="utf-8")
+          PY
       - name: Validate full differential matrix
         run: |
           python - <<'PY'
@@ -85,7 +114,7 @@ jobs:
                   differential = pass_result.get("differential", {})
                   if differential.get("inputs") != [0, 7, 1, -11, -3, 64, 13, -64, 31]:
                       raise SystemExit(f"differential input set is incomplete: {pass_name}")
-                  if len(differential.get("cases", [])) != 5:
+                  if len(differential.get("cases", [])) != 9:
                       raise SystemExit(f"differential case evidence is incomplete: {pass_name}")
           print(f"differential samples: {report['passed_samples']}")
       - name: Run static recovery benchmark

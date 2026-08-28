@@ -51,8 +51,9 @@ deltas without retaining raw analyzer output. `results/tools.json` includes a
 per-pass summary and one measurement row per sample/pass pair. Licensed or
 unconfigured analyzers remain explicitly omitted. The command fails if the
 configured analyzer cannot measure every passed sample/pass pair. Public
-workflow runs retain `build/manifest.json`, `results/matrix.json`, and
-`results/tools.json` as a downloadable evidence artifact.
+workflow runs publish the per-pass counters in the job summary and retain
+`build/manifest.json`, `results/matrix.json`, and `results/tools.json` as a
+downloadable evidence artifact.
 
 The malformed corpus command derives deterministic truncated, invalid-header,
 and arbitrary-byte ELF samples from one built sample. It runs the real
