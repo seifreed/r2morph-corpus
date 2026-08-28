@@ -4,13 +4,19 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import signal
+import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
 from differential_run import compare, generated_inputs
-from transform_sample import PASS_TYPES, transform
+from transform_sample import PASS_TYPES
 
 DEFAULT_PASSES = tuple(sorted(PASS_TYPES))
+_TRANSFORM_TIMEOUT_SECONDS = 120
+_MAX_ERROR_LENGTH = 240
 
 
 def _decompiler_effectiveness() -> dict[str, dict[str, str]]:
@@ -39,6 +45,61 @@ def _sample_path(build_root: Path, sample_id: object) -> Path:
     return build_root / relative
 
 
+def _transform_sample(
+    source: Path,
+    transformed: Path,
+    metadata: Path,
+    seed: int,
+    pass_name: str,
+) -> dict[str, object]:
+    """Run one pass in an isolated process with a bounded lifetime."""
+    metadata.parent.mkdir(parents=True, exist_ok=True)
+    command = [
+        sys.executable,
+        str(Path(__file__).with_name("transform_sample.py")),
+        str(source),
+        str(transformed),
+        "--output",
+        str(metadata),
+        "--seed",
+        str(seed),
+        "--pass",
+        pass_name,
+    ]
+    process = subprocess.Popen(
+        command,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+    try:
+        process.wait(timeout=_TRANSFORM_TIMEOUT_SECONDS)
+    except subprocess.TimeoutExpired:
+        os.killpg(process.pid, signal.SIGKILL)
+        process.wait()
+        return {
+            "status": "error",
+            "error_type": "TimeoutExpired",
+            "reason": f"pass exceeded {_TRANSFORM_TIMEOUT_SECONDS} seconds",
+        }
+    if metadata.exists():
+        try:
+            result = json.loads(metadata.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as error:
+            return {
+                "status": "error",
+                "error_type": type(error).__name__,
+                "reason": str(error)[:_MAX_ERROR_LENGTH],
+            }
+        if isinstance(result, dict):
+            return result
+    return {
+        "status": "error",
+        "error_type": "ProcessError",
+        "reason": f"transform process exited with {process.returncode}",
+    }
+
+
 def _run_sample(
     build_root: Path,
     output_root: Path,
@@ -61,7 +122,8 @@ def _run_sample(
     pass_results: dict[str, Any] = {}
     for pass_name in pass_names:
         transformed = output_root / "transformed" / pass_name / str(sample_id)
-        transformation = transform(source, transformed, seed, pass_name)
+        metadata = output_root / "transformations" / pass_name / f"{sample_id}.json"
+        transformation = _transform_sample(source, transformed, metadata, seed, pass_name)
         pass_result: dict[str, Any] = {"transformation": transformation}
         if transformation["status"] == "error":
             pass_result["status"] = "error"
