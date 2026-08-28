@@ -1,10 +1,11 @@
+import subprocess
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
 from scripts.build_corpus import is_linux_elf_x86_64
-from scripts.run_matrix import _pass_summary
+from scripts.run_matrix import _pass_summary, _wait_for_process
 
 
 def _write_elf_header(path: Path) -> None:
@@ -77,3 +78,14 @@ def test_pass_summary_aggregates_applied_omitted_and_differential_results() -> N
             "applied_units": 1,
         },
     }
+
+
+def test_transform_timeout_terminates_a_real_process_group() -> None:
+    process = subprocess.Popen(
+        [sys.executable, "-c", "import time; time.sleep(10)"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+    assert not _wait_for_process(process, 0.01)
+    assert process.poll() is not None

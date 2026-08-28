@@ -45,6 +45,16 @@ def _sample_path(build_root: Path, sample_id: object) -> Path:
     return build_root / relative
 
 
+def _wait_for_process(process: subprocess.Popen[bytes], timeout_seconds: float) -> bool:
+    try:
+        process.wait(timeout=timeout_seconds)
+    except subprocess.TimeoutExpired:
+        os.killpg(process.pid, signal.SIGKILL)
+        process.wait()
+        return False
+    return True
+
+
 def _transform_sample(
     source: Path,
     transformed: Path,
@@ -72,11 +82,7 @@ def _transform_sample(
         stderr=subprocess.DEVNULL,
         start_new_session=True,
     )
-    try:
-        process.wait(timeout=_TRANSFORM_TIMEOUT_SECONDS)
-    except subprocess.TimeoutExpired:
-        os.killpg(process.pid, signal.SIGKILL)
-        process.wait()
+    if not _wait_for_process(process, _TRANSFORM_TIMEOUT_SECONDS):
         return {
             "status": "error",
             "error_type": "TimeoutExpired",
