@@ -59,7 +59,7 @@ jobs:
           PY
 
       - name: Transform and compare every built sample and pass
-        run: python scripts/run_matrix.py --build build --output results --seed 20260826 --workers 8 --report-only
+        run: python scripts/run_matrix.py --build build --output results --seed 20260826 --workers 16 --report-only
 
       - name: Run Ghidra benchmark for every pass
         run: |
@@ -68,7 +68,7 @@ jobs:
             --build build \
             --matrix results/matrix.json \
             --output results/ghidra.json \
-            --workers 4 \
+            --workers 8 \
             --report-only
 
       - name: Validate complete Ghidra evidence
