@@ -1,0 +1,108 @@
+name: Ghidra Corpus Benchmark
+
+"on":
+  workflow_dispatch:
+
+jobs:
+  ghidra:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git build-essential pkg-config clang g++ wget unzip openjdk-21-jdk
+
+      - name: Install Ghidra
+        run: |
+          wget -q https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_11.4.2_build/ghidra_11.4.2_PUBLIC_20250826.zip -O /tmp/ghidra.zip
+          echo "795a02076af16257bd6f3f4736c4fc152ce9ff1f95df35cd47e2adc086e037a6  /tmp/ghidra.zip" | sha256sum --check
+          unzip -q /tmp/ghidra.zip -d /opt
+          echo "GHIDRA_ANALYZE_HEADLESS=/opt/ghidra_11.4.2_PUBLIC/support/analyzeHeadless" >> "$GITHUB_ENV"
+          echo "JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64" >> "$GITHUB_ENV"
+
+      - name: Install r2morph runtime
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install \
+            "r2pipe>=1.9.0" \
+            "capstone>=5.0.0" \
+            "keystone-engine>=0.9.2" \
+            "pydantic>=2.0.0" \
+            "rich>=13.0.0" \
+            "typer>=0.9.0" \
+            "pyyaml>=6.0.0" \
+            "pytest>=7.4.0"
+          python -m pip install --no-deps \
+            "git+https://github.com/seifreed/r2morph.git@main"
+
+      - name: Build compiler matrix
+        run: python scripts/build_corpus.py --output build
+
+      - name: Require built samples
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          manifest = json.loads(Path("build/manifest.json").read_text())
+          built = [row for row in manifest["records"] if row["status"] == "built"]
+          if not built:
+              raise SystemExit("compiler matrix produced no samples")
+          print(f"built samples: {len(built)}")
+          PY
+
+      - name: Transform and compare every built sample and pass
+        run: python scripts/run_matrix.py --build build --output results --seed 20260826 --workers 8 --report-only
+
+      - name: Run Ghidra benchmark for every pass
+        run: |
+          python scripts/tool_benchmark.py \
+            --analyzer ghidra \
+            --build build \
+            --matrix results/matrix.json \
+            --output results/ghidra.json \
+            --workers 4 \
+            --report-only
+
+      - name: Validate complete Ghidra evidence
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          manifest = json.loads(Path("build/manifest.json").read_text())
+          matrix = json.loads(Path("results/matrix.json").read_text())
+          benchmark = json.loads(Path("results/ghidra.json").read_text())
+          built = sum(row["status"] == "built" for row in manifest["records"])
+          if matrix["built_samples"] != built:
+              raise SystemExit("matrix does not cover every built sample")
+          if matrix["failed_samples"] != 0 or matrix["passed_samples"] != built:
+              raise SystemExit("differential matrix is incomplete")
+          if benchmark["status"] != "passed":
+              raise SystemExit("Ghidra benchmark did not pass")
+          expected = sum(summary["samples"] for summary in matrix["pass_summary"].values())
+          if benchmark["measured_samples"] != expected:
+              raise SystemExit("Ghidra benchmark does not cover every pass/sample pair")
+          for name, summary in benchmark["pass_summary"].items():
+              if summary["measured_samples"] + summary["failed_samples"] != summary["samples"]:
+                  raise SystemExit(f"incomplete Ghidra pass coverage: {name}")
+          print(f"Ghidra measurements: {benchmark['measured_samples']}")
+          PY
+
+      - name: Upload Ghidra evidence
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ghidra-corpus-evidence-${{ github.sha }}
+          path: |
+            build/manifest.json
+            results/matrix.json
+            results/ghidra.json
+          retention-days: 90
