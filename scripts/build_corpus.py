@@ -25,10 +25,15 @@ SOURCE_SPECS = (
     ("indexed_memory.c", "c"),
     ("stack_abi.c", "c"),
     ("variadic_tls.c", "c"),
+    ("threads_signals.c", "c"),
     ("avx128.c", "c"),
     ("avx128_integer.c", "c"),
 )
-SOURCE_FLAGS = {"avx128.c": ("-mavx",), "avx128_integer.c": ("-mavx2",)}
+SOURCE_FLAGS = {
+    "avx128.c": ("-mavx",),
+    "avx128_integer.c": ("-mavx2",),
+    "threads_signals.c": ("-pthread",),
+}
 _ELF_MAGIC = b"\x7fELF"
 _ELF_CLASS_64 = 2
 _ELF_DATA_LSB = 1

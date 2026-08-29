@@ -53,12 +53,20 @@ def test_build_matrix_includes_variadic_tls_source() -> None:
     assert ("variadic_tls.c", "c") in SOURCE_SPECS
 
 
+def test_build_matrix_includes_threads_signals_source() -> None:
+    assert ("threads_signals.c", "c") in SOURCE_SPECS
+
+
 def test_build_matrix_declares_avx128_compiler_flags() -> None:
     assert SOURCE_FLAGS["avx128.c"] == ("-mavx",)
 
 
 def test_build_matrix_declares_avx128_integer_compiler_flags() -> None:
     assert SOURCE_FLAGS["avx128_integer.c"] == ("-mavx2",)
+
+
+def test_build_matrix_declares_threads_signals_compiler_flags() -> None:
+    assert SOURCE_FLAGS["threads_signals.c"] == ("-pthread",)
 
 
 def test_tool_benchmark_accepts_ghidra_metric_object() -> None:
