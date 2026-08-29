@@ -7,7 +7,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
 from scripts.build_corpus import SOURCE_FLAGS, SOURCE_SPECS, is_linux_elf_x86_64
 from scripts.differential_run import generated_inputs
-from scripts.run_matrix import _pass_summary, _wait_for_process, run_matrix
+from scripts.run_matrix import (
+    _pass_summary,
+    _sample_result,
+    _wait_for_process,
+    run_matrix,
+)
 from scripts.tool_benchmark import (
     _MAX_SAMPLES,
     _run_ghidra_batch,
@@ -93,7 +98,9 @@ def test_tool_benchmark_accepts_ghidra_metric_object() -> None:
     }
 
 
-def test_tool_benchmark_batches_ghidra_programs_with_stable_keys(tmp_path: Path) -> None:
+def test_tool_benchmark_batches_ghidra_programs_with_stable_keys(
+    tmp_path: Path,
+) -> None:
     analyzer = tmp_path / "ghidra-analyzer"
     analyzer.write_text(
         "#!/usr/bin/env python3\n"
@@ -102,7 +109,7 @@ def test_tool_benchmark_batches_ghidra_programs_with_stable_keys(tmp_path: Path)
         "root = Path(sys.argv[sys.argv.index('-import') + 1])\n"
         "for program in sorted(root.iterdir()):\n"
         "    print('R2MORPH_METRICS ' + program.name + ' ' + "
-        "'{\"functions\":1,\"basic_blocks\":2,\"edges\":3,\"instructions\":4}')\n",
+        '\'{"functions":1,"basic_blocks":2,"edges":3,"instructions":4}\')\n',
         encoding="utf-8",
     )
     analyzer.chmod(0o755)
@@ -213,3 +220,18 @@ def test_run_matrix_accepts_bounded_worker_count(tmp_path: Path) -> None:
     report = run_matrix(build, tmp_path / "results", 20260828, (), workers=2)
 
     assert report["built_samples"] == 0
+
+
+def test_run_matrix_reassembles_parallel_passes_per_sample() -> None:
+    pass_results = {
+        "Alpha": {"status": "passed"},
+        "Beta": {"status": "passed"},
+    }
+
+    result = _sample_result({"id": "sample", "compiler": "cc"}, pass_results)
+
+    assert {key: result[key] for key in ("id", "status", "passes")} == {
+        "id": "sample",
+        "status": "passed",
+        "passes": pass_results,
+    }
