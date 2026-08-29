@@ -108,17 +108,41 @@ def _transform_sample(
     }
 
 
-def _run_sample(
+def _run_pass(
     build_root: Path,
     output_root: Path,
     record: dict[str, Any],
     seed: int,
-    pass_names: tuple[str, ...],
-) -> dict[str, Any]:
-    sample_id = record["id"]
+    pass_name: str,
+) -> tuple[str, str, dict[str, Any]]:
+    sample_id = str(record["id"])
     source = _sample_path(build_root, sample_id)
+    transformed = output_root / "transformed" / pass_name / sample_id
+    metadata = output_root / "transformations" / pass_name / f"{sample_id}.json"
+    transformation = _transform_sample(source, transformed, metadata, seed, pass_name)
+    pass_result: dict[str, Any] = {"transformation": transformation}
+    if transformation["status"] == "error":
+        pass_result["status"] = "error"
+        return sample_id, pass_name, pass_result
+    try:
+        differential = compare(source, transformed, generated_inputs(seed))
+    except Exception as error:  # The matrix records per-sample evidence failures.
+        pass_result["status"] = "error"
+        pass_result["error_type"] = type(error).__name__
+        pass_result["reason"] = str(error)
+        return sample_id, pass_name, pass_result
+    pass_result["differential"] = differential
+    pass_result["status"] = "passed" if differential["equivalent"] is True else "error"
+    if pass_result["status"] == "error":
+        pass_result["reason"] = "differential observables diverged"
+    return sample_id, pass_name, pass_result
+
+
+def _sample_result(
+    record: dict[str, Any], pass_results: dict[str, Any]
+) -> dict[str, Any]:
     result: dict[str, Any] = {
-        "id": sample_id,
+        "id": record["id"],
         "compiler": record.get("compiler"),
         "language": record.get("language"),
         "optimization": record.get("optimization"),
@@ -126,38 +150,21 @@ def _run_sample(
         "symbols": record.get("symbols"),
         "link": record.get("link"),
         "decompiler_effectiveness": _decompiler_effectiveness(),
+        "passes": pass_results,
     }
-    pass_results: dict[str, Any] = {}
-    for pass_name in pass_names:
-        transformed = output_root / "transformed" / pass_name / str(sample_id)
-        metadata = output_root / "transformations" / pass_name / f"{sample_id}.json"
-        transformation = _transform_sample(source, transformed, metadata, seed, pass_name)
-        pass_result: dict[str, Any] = {"transformation": transformation}
-        if transformation["status"] == "error":
-            pass_result["status"] = "error"
-            pass_results[pass_name] = pass_result
-            continue
-        try:
-            differential = compare(source, transformed, generated_inputs(seed))
-        except Exception as error:  # The matrix records per-sample evidence failures.
-            pass_result["status"] = "error"
-            pass_result["error_type"] = type(error).__name__
-            pass_result["reason"] = str(error)
-            pass_results[pass_name] = pass_result
-            continue
-        pass_result["differential"] = differential
-        pass_result["status"] = "passed" if differential["equivalent"] is True else "error"
-        if pass_result["status"] == "error":
-            pass_result["reason"] = "differential observables diverged"
-        pass_results[pass_name] = pass_result
-    result["passes"] = pass_results
-    result["status"] = "passed" if all(item["status"] == "passed" for item in pass_results.values()) else "error"
+    result["status"] = (
+        "passed"
+        if all(item["status"] == "passed" for item in pass_results.values())
+        else "error"
+    )
     if result["status"] == "error":
         result["reason"] = "one or more pass results failed"
     return result
 
 
-def _pass_summary(records: list[dict[str, Any]], pass_names: tuple[str, ...]) -> dict[str, dict[str, int]]:
+def _pass_summary(
+    records: list[dict[str, Any]], pass_names: tuple[str, ...]
+) -> dict[str, dict[str, int]]:
     summary = {
         name: {
             "samples": 0,
@@ -176,7 +183,11 @@ def _pass_summary(records: list[dict[str, Any]], pass_names: tuple[str, ...]) ->
             counters["samples"] += 1
             transformation = result.get("transformation", {})
             status = transformation.get("status")
-            status_field = {"applied": "applied", "omitted": "omitted", "error": "errors"}.get(status)
+            status_field = {
+                "applied": "applied",
+                "omitted": "omitted",
+                "error": "errors",
+            }.get(status)
             if status_field is not None:
                 counters[status_field] += 1
             if result.get("status") == "passed":
@@ -206,9 +217,19 @@ def run_matrix(
         if isinstance(record, dict) and record.get("status") == "built"
     ]
     output_root.mkdir(parents=True, exist_ok=True)
+    pass_results = {str(record["id"]): {} for record in built}
     with ThreadPoolExecutor(max_workers=workers) as executor:
-        futures = [executor.submit(_run_sample, build_root, output_root, record, seed, pass_names) for record in built]
-        results = [future.result() for future in futures]
+        futures = [
+            executor.submit(_run_pass, build_root, output_root, record, seed, pass_name)
+            for record in built
+            for pass_name in pass_names
+        ]
+        for future in futures:
+            sample_id, pass_name, pass_result = future.result()
+            pass_results[sample_id][pass_name] = pass_result
+    results = [
+        _sample_result(record, pass_results[str(record["id"])]) for record in built
+    ]
     failed_records = [
         {
             "id": result.get("id"),
@@ -240,7 +261,9 @@ def main() -> int:
     parser.add_argument("--build", type=Path, default=Path("build"))
     parser.add_argument("--output", type=Path, default=Path("results"))
     parser.add_argument("--seed", type=int, default=20260826)
-    parser.add_argument("--passes", nargs="+", choices=sorted(PASS_TYPES), default=list(DEFAULT_PASSES))
+    parser.add_argument(
+        "--passes", nargs="+", choices=sorted(PASS_TYPES), default=list(DEFAULT_PASSES)
+    )
     parser.add_argument("--workers", type=int, default=_DEFAULT_WORKERS)
     parser.add_argument(
         "--report-only",
@@ -249,7 +272,9 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    result = run_matrix(args.build, args.output, args.seed, tuple(args.passes), args.workers)
+    result = run_matrix(
+        args.build, args.output, args.seed, tuple(args.passes), args.workers
+    )
     (args.output / "matrix.json").write_text(
         json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
