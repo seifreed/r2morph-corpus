@@ -63,6 +63,10 @@ def test_build_matrix_includes_variadic_tls_source() -> None:
     assert ("variadic_tls.c", "c") in SOURCE_SPECS
 
 
+def test_build_matrix_includes_integer_variadic_source() -> None:
+    assert ("variadic_gp.c", "c") in SOURCE_SPECS
+
+
 def test_build_matrix_includes_threads_signals_source() -> None:
     assert ("threads_signals.c", "c") in SOURCE_SPECS
 

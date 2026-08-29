@@ -9,8 +9,8 @@ The sources exercise switch dispatch, loops, recursion, pointers, TLS, C++
 exceptions, 128-bit SIMD including packed and scalar AVX, AVX256 integer
 variable shifts, AVX256 call ABI,
 indexed memory, dedicated indirect
-function-pointer calls, stack-passed arguments, floating-point variadic ABI
-handling, threads, TLS, and signal delivery.
+function-pointer calls, stack-passed arguments, integer and floating-point
+variadic ABI handling, threads, TLS, and signal delivery.
 
 Build the available matrix:
 
