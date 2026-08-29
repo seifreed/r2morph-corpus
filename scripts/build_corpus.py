@@ -24,6 +24,7 @@ SOURCE_SPECS = (
     ("indirect_calls.c", "c"),
     ("indexed_memory.c", "c"),
     ("stack_abi.c", "c"),
+    ("variadic_tls.c", "c"),
     ("avx128.c", "c"),
     ("avx128_integer.c", "c"),
 )

@@ -7,7 +7,8 @@ linking when available.
 
 The sources exercise switch dispatch, loops, recursion, pointers, TLS, C++
 exceptions, 128-bit SIMD including AVX, indexed memory, dedicated indirect
-function-pointer calls, stack-passed arguments, and variadic ABI handling.
+function-pointer calls, stack-passed arguments, and floating-point variadic ABI
+handling.
 
 Build the available matrix:
 
