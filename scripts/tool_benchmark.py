@@ -209,7 +209,7 @@ def benchmark(
         (record, pass_name)
         for record in records
         for pass_name, result in record.get("passes", {}).items()
-        if isinstance(result, dict) and result.get("status") == "passed"
+        if isinstance(result, dict)
     ]
     pass_names = tuple(matrix.get("passes", ()))
     executable_name = "analyzeHeadless" if analyzer_name == "ghidra" else "r2"
@@ -282,6 +282,11 @@ def main() -> int:
     parser.add_argument("--output", type=Path, default=Path("results/tools.json"))
     parser.add_argument("--analyzer", choices=("radare2", "ghidra"), default="radare2")
     parser.add_argument("--ghidra-script", type=Path, default=_GHIDRA_SCRIPT)
+    parser.add_argument(
+        "--report-only",
+        action="store_true",
+        help="write the complete benchmark report and leave pass/fail enforcement to a validator",
+    )
     args = parser.parse_args()
     result = benchmark(
         args.build, args.matrix, args.output.parent, args.analyzer, args.ghidra_script
@@ -298,7 +303,7 @@ def main() -> int:
             }
         )
     )
-    return 0 if result["status"] == "passed" else 1
+    return 0 if args.report_only or result["status"] == "passed" else 1
 
 
 if __name__ == "__main__":

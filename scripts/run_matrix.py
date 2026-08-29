@@ -242,6 +242,11 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=20260826)
     parser.add_argument("--passes", nargs="+", choices=sorted(PASS_TYPES), default=list(DEFAULT_PASSES))
     parser.add_argument("--workers", type=int, default=_DEFAULT_WORKERS)
+    parser.add_argument(
+        "--report-only",
+        action="store_true",
+        help="write the complete matrix report and leave pass/fail enforcement to a validator",
+    )
     args = parser.parse_args()
 
     result = run_matrix(args.build, args.output, args.seed, tuple(args.passes), args.workers)
@@ -259,7 +264,7 @@ def main() -> int:
             sort_keys=True,
         )
     )
-    return 1 if result["failed_samples"] else 0
+    return 0 if args.report_only or result["failed_samples"] == 0 else 1
 
 
 if __name__ == "__main__":

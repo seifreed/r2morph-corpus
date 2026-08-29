@@ -46,7 +46,7 @@ jobs:
           print(f"built samples: {len(built)}")
           PY
       - name: Transform and compare every built sample and pass
-        run: python scripts/run_matrix.py --build build --output results --seed 20260826 --workers 8
+        run: python scripts/run_matrix.py --build build --output results --seed 20260826 --workers 8 --report-only
       - name: Publish per-pass matrix summary
         if: always()
         run: |
@@ -76,7 +76,11 @@ jobs:
                   )
               Path(summary_path).write_text("\n".join(lines) + "\n", encoding="utf-8")
           PY
+      - name: Run static recovery benchmark
+        run: python scripts/tool_benchmark.py --build build --matrix results/matrix.json --output results/tools.json --report-only
+        if: always()
       - name: Validate full differential matrix
+        if: always()
         run: |
           python - <<'PY'
           import json
@@ -117,9 +121,8 @@ jobs:
                   if len(differential.get("cases", [])) != 9:
                       raise SystemExit(f"differential case evidence is incomplete: {pass_name}")
           print(f"differential samples: {report['passed_samples']}")
-      - name: Run static recovery benchmark
-        run: python scripts/tool_benchmark.py --build build --matrix results/matrix.json --output results/tools.json
       - name: Validate static recovery benchmark
+        if: always()
         run: |
           python - <<'PY'
           import json
@@ -128,11 +131,9 @@ jobs:
           benchmark = json.loads(Path("results/tools.json").read_text())
           if benchmark["status"] != "passed":
               raise SystemExit("static recovery benchmark did not pass")
-          expected_measurements = sum(
-              summary["differential_passed"] for summary in report["pass_summary"].values()
-          )
+          expected_measurements = sum(summary["samples"] for summary in report["pass_summary"].values())
           if benchmark["measured_samples"] != expected_measurements:
-              raise SystemExit("static recovery benchmark does not cover every passed sample and pass")
+              raise SystemExit("static recovery benchmark does not cover every matrix sample and pass")
           for pass_name, summary in benchmark["pass_summary"].items():
               if summary["measured_samples"] + summary["failed_samples"] != summary["samples"]:
                   raise SystemExit(f"static recovery benchmark is incomplete: {pass_name}")
