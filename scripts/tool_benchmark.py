@@ -14,7 +14,8 @@ import time
 from pathlib import Path
 from typing import Any
 
-_MAX_SAMPLES = 4096
+# Keep the benchmark bounded while covering the current 800-sample, six-pass matrix.
+_MAX_SAMPLES = 8192
 _MAX_ERROR_LENGTH = 240
 _ANALYZER_TIMEOUT_SECONDS = 30
 _GHIDRA_TIMEOUT_SECONDS = 120
