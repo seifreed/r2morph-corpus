@@ -61,6 +61,14 @@ def test_build_matrix_declares_avx128_compiler_flags() -> None:
     assert SOURCE_FLAGS["avx128.c"] == ("-mavx",)
 
 
+def test_build_matrix_includes_scalar_avx_source() -> None:
+    assert ("avx128_scalar.c", "c") in SOURCE_SPECS
+
+
+def test_build_matrix_declares_scalar_avx_compiler_flags() -> None:
+    assert SOURCE_FLAGS["avx128_scalar.c"] == ("-mavx",)
+
+
 def test_build_matrix_declares_avx128_integer_compiler_flags() -> None:
     assert SOURCE_FLAGS["avx128_integer.c"] == ("-mavx2",)
 

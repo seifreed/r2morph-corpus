@@ -27,10 +27,12 @@ SOURCE_SPECS = (
     ("variadic_tls.c", "c"),
     ("threads_signals.c", "c"),
     ("avx128.c", "c"),
+    ("avx128_scalar.c", "c"),
     ("avx128_integer.c", "c"),
 )
 SOURCE_FLAGS = {
     "avx128.c": ("-mavx",),
+    "avx128_scalar.c": ("-mavx",),
     "avx128_integer.c": ("-mavx2",),
     "threads_signals.c": ("-pthread",),
 }
