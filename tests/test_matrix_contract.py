@@ -15,8 +15,8 @@ from scripts.run_matrix import (
 )
 from scripts.tool_benchmark import (
     _MAX_SAMPLES,
-    _run_ghidra_batch,
     _metric_object,
+    _run_ghidra_batch,
     benchmark,
 )
 
@@ -77,6 +77,14 @@ def test_build_matrix_includes_scalar_avx_source() -> None:
 
 def test_build_matrix_declares_scalar_avx_compiler_flags() -> None:
     assert SOURCE_FLAGS["avx128_scalar.c"] == ("-mavx",)
+
+
+def test_build_matrix_includes_avx256_source() -> None:
+    assert ("avx256.c", "c") in SOURCE_SPECS
+
+
+def test_build_matrix_declares_avx256_compiler_flags() -> None:
+    assert SOURCE_FLAGS["avx256.c"] == ("-mavx", "-mno-vzeroupper")
 
 
 def test_build_matrix_declares_avx128_integer_compiler_flags() -> None:

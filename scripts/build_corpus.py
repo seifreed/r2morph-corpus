@@ -29,11 +29,13 @@ SOURCE_SPECS = (
     ("avx128.c", "c"),
     ("avx128_scalar.c", "c"),
     ("avx128_integer.c", "c"),
+    ("avx256.c", "c"),
 )
 SOURCE_FLAGS = {
     "avx128.c": ("-mavx",),
     "avx128_scalar.c": ("-mavx",),
     "avx128_integer.c": ("-mavx2",),
+    "avx256.c": ("-mavx", "-mno-vzeroupper"),
     "threads_signals.c": ("-pthread",),
 }
 _ELF_MAGIC = b"\x7fELF"
@@ -88,11 +90,15 @@ def compile_command(
 
 
 def version(compiler: str) -> str:
-    result = subprocess.run([compiler, "--version"], capture_output=True, text=True, timeout=10, check=True)
+    result = subprocess.run(
+        [compiler, "--version"], capture_output=True, text=True, timeout=10, check=True
+    )
     return result.stdout.splitlines()[0][:160]
 
 
-def build_one(command: list[str], output: Path, source_hash: str, metadata: dict[str, Any]) -> dict[str, Any]:
+def build_one(
+    command: list[str], output: Path, source_hash: str, metadata: dict[str, Any]
+) -> dict[str, Any]:
     started = time.perf_counter()
     completed = subprocess.run(command, capture_output=True, timeout=120, check=False)
     record = dict(metadata)
@@ -107,22 +113,33 @@ def build_one(command: list[str], output: Path, source_hash: str, metadata: dict
         }
     )
     if completed.returncode != 0 or not output.exists():
-        record.update({"status": "omitted", "reason": "compiler failed or output missing"})
+        record.update(
+            {"status": "omitted", "reason": "compiler failed or output missing"}
+        )
     elif not is_linux_elf_x86_64(output):
-        record.update({"status": "omitted", "reason": "compiler output is not Linux ELF x86-64"})
+        record.update(
+            {"status": "omitted", "reason": "compiler output is not Linux ELF x86-64"}
+        )
     else:
-        record.update({"status": "built", "sha256": digest(output), "size": output.stat().st_size})
+        record.update(
+            {"status": "built", "sha256": digest(output), "size": output.stat().st_size}
+        )
     return record
 
 
 def build_matrix(source_root: Path, output_root: Path) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
     for candidate, (source_name, language), optimization, pie, symbols, link in product(
-        ("gcc", "clang"), SOURCE_SPECS, OPTIMIZATIONS, PIE_MODES, SYMBOL_MODES, LINK_MODES
+        ("gcc", "clang"),
+        SOURCE_SPECS,
+        OPTIMIZATIONS,
+        PIE_MODES,
+        SYMBOL_MODES,
+        LINK_MODES,
     ):
         compiler = compiler_for(language, candidate)
         source = source_root / source_name
-        sample_id = "-".join((candidate, source.stem, optimization, pie, symbols, link))
+        sample_id = f"{candidate}-{source.stem}-{optimization}-{pie}-{symbols}-{link}"
         output = output_root / sample_id
         output_root.mkdir(parents=True, exist_ok=True)
         metadata = {
@@ -136,11 +153,21 @@ def build_matrix(source_root: Path, output_root: Path) -> list[dict[str, Any]]:
             "link": link,
         }
         if shutil.which(compiler) is None:
-            records.append({**metadata, "status": "omitted", "reason": "compiler unavailable"})
+            records.append(
+                {**metadata, "status": "omitted", "reason": "compiler unavailable"}
+            )
             continue
         metadata["compiler_version"] = version(compiler)
         record = build_one(
-            compile_command(compiler, source, output, optimization, pie, link, SOURCE_FLAGS.get(source_name, ())),
+            compile_command(
+                compiler,
+                source,
+                output,
+                optimization,
+                pie,
+                link,
+                SOURCE_FLAGS.get(source_name, ()),
+            ),
             output,
             digest(source),
             metadata,
@@ -150,7 +177,12 @@ def build_matrix(source_root: Path, output_root: Path) -> list[dict[str, Any]]:
             if strip_tool is None:
                 record.update({"status": "omitted", "reason": "strip tool unavailable"})
             else:
-                subprocess.run([strip_tool, str(output)], capture_output=True, timeout=30, check=True)
+                subprocess.run(
+                    [strip_tool, str(output)],
+                    capture_output=True,
+                    timeout=30,
+                    check=True,
+                )
                 record.update({"sha256": digest(output), "size": output.stat().st_size})
         records.append(record)
     return records
@@ -168,8 +200,17 @@ def main() -> int:
         "records": records,
     }
     args.output.mkdir(parents=True, exist_ok=True)
-    (args.output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps({"records": len(records), "built": sum(row["status"] == "built" for row in records)}))
+    (args.output / "manifest.json").write_text(
+        json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
+    )
+    print(
+        json.dumps(
+            {
+                "records": len(records),
+                "built": sum(row["status"] == "built" for row in records),
+            }
+        )
+    )
     return 0
 
 
