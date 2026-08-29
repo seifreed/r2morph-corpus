@@ -18,6 +18,7 @@ __attribute__((noinline)) static void *thread_entry(void *argument) {
 
 int main(int argc, char **argv) {
     pthread_t thread;
+    thread_value = 9UL;
     signal(SIGUSR1, on_signal);
     if (pthread_create(&thread, NULL, thread_entry, (void *)5UL) != 0) {
         return 1;
