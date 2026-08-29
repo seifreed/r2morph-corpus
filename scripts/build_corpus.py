@@ -22,6 +22,7 @@ SOURCE_SPECS = (
     ("exceptions.cpp", "c++"),
     ("vector_abi.c", "c"),
     ("indirect_calls.c", "c"),
+    ("indexed_memory.c", "c"),
     ("avx128.c", "c"),
     ("avx128_integer.c", "c"),
 )
