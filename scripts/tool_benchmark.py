@@ -15,14 +15,15 @@ import time
 from pathlib import Path
 from typing import Any
 
-# Keep the benchmark bounded while covering the current 800-sample, six-pass matrix.
+# Keep the benchmark bounded while covering the current full corpus matrix.
 _MAX_SAMPLES = 8192
 _MAX_ERROR_LENGTH = 240
 _ANALYZER_TIMEOUT_SECONDS = 30
-_GHIDRA_TIMEOUT_SECONDS = 120
+_GHIDRA_TIMEOUT_SECONDS = 600
+_GHIDRA_BATCH_SIZE = 16
 _DEFAULT_WORKERS = 4
 _GHIDRA_SCRIPT = Path(__file__).with_name("GhidraFunctionMetrics.java")
-_GHIDRA_METRICS_PATTERN = re.compile(rb"R2MORPH_METRICS (\{[^\n]+\})")
+_GHIDRA_METRICS_PATTERN = re.compile(rb"R2MORPH_METRICS ([^ \n]+) (\{[^\n]+\})")
 
 
 def _safe_sample_path(build_root: Path, sample_id: object) -> Path:
@@ -94,14 +95,23 @@ def _run_analyzer(executable: Path, analyzer: str) -> bytes:
     return stdout
 
 
-def _run_ghidra(executable: Path, analyzer: str, script: Path) -> dict[str, int]:
+def _run_ghidra_batch(
+    requests: list[tuple[str, Path]], analyzer: str, script: Path
+) -> dict[str, dict[str, int]]:
     with tempfile.TemporaryDirectory(prefix="r2morph-ghidra-") as project_root:
+        import_root = Path(project_root) / "inputs"
+        import_root.mkdir()
+        names: dict[str, str] = {}
+        for index, (key, executable) in enumerate(requests):
+            name = f"sample-{index:05d}.bin"
+            shutil.copy2(executable, import_root / name)
+            names[name] = key
         command = [
             analyzer,
             project_root,
             "analysis",
             "-import",
-            str(executable),
+            str(import_root),
             "-scriptPath",
             str(script.parent),
             "-postScript",
@@ -116,26 +126,24 @@ def _run_ghidra(executable: Path, analyzer: str, script: Path) -> dict[str, int]
         )
         if completed.returncode != 0:
             raise RuntimeError(f"Ghidra exited with {completed.returncode}")
-        match = _GHIDRA_METRICS_PATTERN.search(completed.stdout)
-        if match is None:
-            raise ValueError("Ghidra returned no metrics")
-        return _metric_object(json.loads(match.group(1)))
+        measurements: dict[str, dict[str, int]] = {}
+        for match in _GHIDRA_METRICS_PATTERN.finditer(completed.stdout):
+            name = match.group(1).decode("utf-8")
+            key = names.get(name)
+            if key is not None:
+                measurements[key] = _metric_object(json.loads(match.group(2)))
+        if len(measurements) != len(requests):
+            raise ValueError("Ghidra returned incomplete batch metrics")
+        return measurements
 
 
 def _analyze(
     executable: Path,
     analyzer: str,
-    analyzer_name: str = "radare2",
-    ghidra_script: Path = _GHIDRA_SCRIPT,
 ) -> dict[str, Any]:
     started = time.perf_counter()
     try:
-        if analyzer_name == "ghidra":
-            metrics = _run_ghidra(executable, analyzer, ghidra_script)
-        else:
-            metrics = _metrics(
-                _parse_function_json(_run_analyzer(executable, analyzer))
-            )
+        metrics = _metrics(_parse_function_json(_run_analyzer(executable, analyzer)))
     except (
         OSError,
         RuntimeError,
@@ -171,14 +179,95 @@ def _measure_sample(
     record: dict[str, Any],
     analyzer: str,
     pass_name: str,
-    analyzer_name: str = "radare2",
-    ghidra_script: Path = _GHIDRA_SCRIPT,
 ) -> dict[str, Any]:
     sample_id = record.get("id")
     original = _safe_sample_path(build_root, sample_id)
     transformed = _safe_sample_path(output_root / "transformed" / pass_name, sample_id)
-    original_metrics = _analyze(original, analyzer, analyzer_name, ghidra_script)
-    transformed_metrics = _analyze(transformed, analyzer, analyzer_name, ghidra_script)
+    original_metrics = _analyze(original, analyzer)
+    transformed_metrics = _analyze(transformed, analyzer)
+    return _measurement_result(
+        sample_id, pass_name, original_metrics, transformed_metrics
+    )
+
+
+def _ghidra_measurements(
+    build_root: Path,
+    output_root: Path,
+    pass_records: list[tuple[dict[str, Any], str]],
+    analyzer: str,
+    ghidra_script: Path,
+    workers: int,
+) -> list[dict[str, Any]]:
+    requests: dict[str, Path] = {}
+    keys: list[tuple[str, str, str, str]] = []
+    for record, pass_name in pass_records:
+        sample_id = record.get("id")
+        original = _safe_sample_path(build_root, sample_id)
+        transformed = _safe_sample_path(
+            output_root / "transformed" / pass_name, sample_id
+        )
+        original_key = f"original-{sample_id}"
+        transformed_key = f"transformed-{pass_name}-{sample_id}"
+        requests.setdefault(original_key, original)
+        requests[transformed_key] = transformed
+        keys.append((str(sample_id), pass_name, original_key, transformed_key))
+
+    request_items = list(requests.items())
+    batches = [
+        request_items[start : start + _GHIDRA_BATCH_SIZE]
+        for start in range(0, len(request_items), _GHIDRA_BATCH_SIZE)
+    ]
+    metrics: dict[str, dict[str, int]] = {}
+    errors: dict[str, str] = {}
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        futures = [
+            (batch, executor.submit(_run_ghidra_batch, batch, analyzer, ghidra_script))
+            for batch in batches
+        ]
+        for batch, future in futures:
+            try:
+                metrics.update(future.result())
+            except (OSError, RuntimeError, ValueError, json.JSONDecodeError) as error:
+                reason = str(error)[:_MAX_ERROR_LENGTH]
+                errors.update({key: reason for key, _path in batch})
+
+    measurements: list[dict[str, Any]] = []
+    for sample_id, pass_name, original_key, transformed_key in keys:
+        original_metrics = metrics.get(original_key)
+        transformed_metrics = metrics.get(transformed_key)
+        if original_metrics is None or transformed_metrics is None:
+            reason = (
+                errors.get(original_key)
+                or errors.get(transformed_key)
+                or "Ghidra returned no metrics"
+            )
+            measurements.append(
+                {
+                    "id": sample_id,
+                    "pass_name": pass_name,
+                    "status": "error",
+                    "reason": reason,
+                    "original": {"status": "error", "reason": reason},
+                    "transformed": {"status": "error", "reason": reason},
+                }
+            )
+            continue
+        original_result = {"status": "measured", **original_metrics}
+        transformed_result = {"status": "measured", **transformed_metrics}
+        measurements.append(
+            _measurement_result(
+                sample_id, pass_name, original_result, transformed_result
+            )
+        )
+    return measurements
+
+
+def _measurement_result(
+    sample_id: object,
+    pass_name: str,
+    original_metrics: dict[str, Any],
+    transformed_metrics: dict[str, Any],
+) -> dict[str, Any]:
     status = (
         "measured"
         if original_metrics["status"] == transformed_metrics["status"] == "measured"
@@ -187,13 +276,13 @@ def _measure_sample(
     result: dict[str, Any] = {"id": sample_id, "pass_name": pass_name, "status": status}
     result["original"] = original_metrics
     result["transformed"] = transformed_metrics
-    if status == "error":
-        result["reason"] = "static analyzer failed for original or transformed sample"
-    else:
+    if status == "measured":
         result["delta"] = {
             field: transformed_metrics[field] - original_metrics[field]
             for field in ("functions", "basic_blocks", "edges", "instructions")
         }
+    else:
+        result["reason"] = "static analyzer failed for original or transformed sample"
     return result
 
 
@@ -239,21 +328,24 @@ def benchmark(
             "optional_runners": _optional_runner_status(),
         }
     selected = pass_records[:_MAX_SAMPLES]
-    with ThreadPoolExecutor(max_workers=workers) as executor:
-        futures = [
-            executor.submit(
-                _measure_sample,
-                build_root,
-                output_root,
-                record,
-                analyzer,
-                pass_name,
-                analyzer_name,
-                ghidra_script,
-            )
-            for record, pass_name in selected
-        ]
-        measurements = [future.result() for future in futures]
+    if analyzer_name == "ghidra":
+        measurements = _ghidra_measurements(
+            build_root, output_root, selected, analyzer, ghidra_script, workers
+        )
+    else:
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            futures = [
+                executor.submit(
+                    _measure_sample,
+                    build_root,
+                    output_root,
+                    record,
+                    analyzer,
+                    pass_name,
+                )
+                for record, pass_name in selected
+            ]
+            measurements = [future.result() for future in futures]
     failed = sum(result["status"] == "error" for result in measurements)
     pass_summary = {
         name: {

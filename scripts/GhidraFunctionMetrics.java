@@ -27,18 +27,20 @@ public class GhidraFunctionMetrics extends GhidraScript {
                 instructions++;
             }
 
-            CodeBlockIterator blockIterator = blockModel.getCodeBlocks(monitor);
-            while (blockIterator.hasNext()) {
-                CodeBlock block = blockIterator.next();
-                if (!function.getBody().contains(block.getFirstStartAddress())) {
-                    continue;
-                }
-                basicBlocks++;
-                CodeBlockReferenceIterator destinationIterator = block.getDestinations(monitor);
-                while (destinationIterator.hasNext()) {
-                    destinationIterator.next();
-                    edges++;
-                }
+        }
+
+        CodeBlockIterator blockIterator = blockModel.getCodeBlocks(monitor);
+        while (blockIterator.hasNext() && !monitor.isCancelled()) {
+            CodeBlock block = blockIterator.next();
+            if (currentProgram.getFunctionManager()
+                    .getFunctionContaining(block.getFirstStartAddress()) == null) {
+                continue;
+            }
+            basicBlocks++;
+            CodeBlockReferenceIterator destinationIterator = block.getDestinations(monitor);
+            while (destinationIterator.hasNext()) {
+                destinationIterator.next();
+                edges++;
             }
         }
 
