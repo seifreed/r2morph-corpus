@@ -10,6 +10,18 @@
   "sources": [
     {"name": "control_flow.c", "language": "c", "features": ["switch", "loops", "recursion", "pointers", "tls"]},
     {"name": "exceptions.cpp", "language": "c++", "features": ["recursion", "pointers", "exceptions"]},
-    {"name": "vector_abi.c", "language": "c", "features": ["128-bit SIMD", "indirect calls", "variadic ABI"]}
+    {"name": "vector_abi.c", "language": "c", "features": ["128-bit SIMD", "indirect calls", "variadic ABI"]},
+    {"name": "indirect_calls.c", "language": "c", "features": ["function-pointer calls", "loops", "pointers"]},
+    {"name": "indexed_memory.c", "language": "c", "features": ["indexed memory", "pointers"]},
+    {"name": "stack_abi.c", "language": "c", "features": ["stack-passed arguments", "integer ABI"]},
+    {"name": "variadic_tls.c", "language": "c", "features": ["floating-point varargs", "tls"]},
+    {"name": "variadic_gp.c", "language": "c", "features": ["integer varargs", "register and stack ABI"]},
+    {"name": "threads_signals.c", "language": "c", "features": ["threads", "tls", "signals"]},
+    {"name": "avx128.c", "language": "c", "features": ["128-bit AVX", "packed floating point"]},
+    {"name": "avx128_scalar.c", "language": "c", "features": ["scalar AVX", "vector call ABI"]},
+    {"name": "avx128_integer.c", "language": "c", "features": ["128-bit integer SIMD"]},
+    {"name": "avx256_integer.c", "language": "c", "features": ["256-bit integer SIMD", "variable shifts"]},
+    {"name": "avx256.c", "language": "c", "features": ["256-bit AVX", "packed floating point"]},
+    {"name": "avx256_call.c", "language": "c", "features": ["256-bit vector call ABI"]}
   ]
 }

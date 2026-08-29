@@ -67,6 +67,16 @@ def test_build_matrix_includes_integer_variadic_source() -> None:
     assert ("variadic_gp.c", "c") in SOURCE_SPECS
 
 
+def test_published_manifest_matches_build_matrix_sources() -> None:
+    manifest = json.loads(
+        Path(__file__).resolve().parents[1].joinpath("manifest.json").read_text()
+    )
+
+    assert {entry["name"] for entry in manifest["sources"]} == {
+        name for name, _language in SOURCE_SPECS
+    }
+
+
 def test_build_matrix_includes_threads_signals_source() -> None:
     assert ("threads_signals.c", "c") in SOURCE_SPECS
 
