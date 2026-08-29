@@ -6,7 +6,8 @@ and -Os, PIE and non-PIE, symbols and stripped outputs, and dynamic/static
 linking when available.
 
 The sources exercise switch dispatch, loops, recursion, pointers, TLS, C++
-exceptions, 128-bit SIMD including packed and scalar AVX, indexed memory, dedicated indirect
+exceptions, 128-bit SIMD including packed and scalar AVX, AVX256 call ABI,
+indexed memory, dedicated indirect
 function-pointer calls, stack-passed arguments, floating-point variadic ABI
 handling, threads, TLS, and signal delivery.
 
