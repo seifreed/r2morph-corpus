@@ -45,6 +45,10 @@ def test_build_matrix_includes_indexed_memory_source() -> None:
     assert ("indexed_memory.c", "c") in SOURCE_SPECS
 
 
+def test_build_matrix_includes_stack_abi_source() -> None:
+    assert ("stack_abi.c", "c") in SOURCE_SPECS
+
+
 def test_build_matrix_declares_avx128_compiler_flags() -> None:
     assert SOURCE_FLAGS["avx128.c"] == ("-mavx",)
 
