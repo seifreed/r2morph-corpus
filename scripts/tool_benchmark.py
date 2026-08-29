@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 import json
 import os
 import re
@@ -19,6 +20,7 @@ _MAX_SAMPLES = 8192
 _MAX_ERROR_LENGTH = 240
 _ANALYZER_TIMEOUT_SECONDS = 30
 _GHIDRA_TIMEOUT_SECONDS = 120
+_DEFAULT_WORKERS = 4
 _GHIDRA_SCRIPT = Path(__file__).with_name("GhidraFunctionMetrics.java")
 _GHIDRA_METRICS_PATTERN = re.compile(rb"R2MORPH_METRICS (\{[^\n]+\})")
 
@@ -201,7 +203,10 @@ def benchmark(
     output_root: Path,
     analyzer_name: str = "radare2",
     ghidra_script: Path = _GHIDRA_SCRIPT,
+    workers: int = _DEFAULT_WORKERS,
 ) -> dict[str, Any]:
+    if workers < 1:
+        raise ValueError("workers must be positive")
     matrix = json.loads(matrix_path.read_text(encoding="utf-8"))
     records = [
         record for record in matrix.get("records", []) if isinstance(record, dict)
@@ -234,18 +239,21 @@ def benchmark(
             "optional_runners": _optional_runner_status(),
         }
     selected = pass_records[:_MAX_SAMPLES]
-    measurements = [
-        _measure_sample(
-            build_root,
-            output_root,
-            record,
-            analyzer,
-            pass_name,
-            analyzer_name,
-            ghidra_script,
-        )
-        for record, pass_name in selected
-    ]
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        futures = [
+            executor.submit(
+                _measure_sample,
+                build_root,
+                output_root,
+                record,
+                analyzer,
+                pass_name,
+                analyzer_name,
+                ghidra_script,
+            )
+            for record, pass_name in selected
+        ]
+        measurements = [future.result() for future in futures]
     failed = sum(result["status"] == "error" for result in measurements)
     pass_summary = {
         name: {
@@ -283,6 +291,7 @@ def main() -> int:
     parser.add_argument("--output", type=Path, default=Path("results/tools.json"))
     parser.add_argument("--analyzer", choices=("radare2", "ghidra"), default="radare2")
     parser.add_argument("--ghidra-script", type=Path, default=_GHIDRA_SCRIPT)
+    parser.add_argument("--workers", type=int, default=_DEFAULT_WORKERS)
     parser.add_argument(
         "--report-only",
         action="store_true",
@@ -290,7 +299,12 @@ def main() -> int:
     )
     args = parser.parse_args()
     result = benchmark(
-        args.build, args.matrix, args.output.parent, args.analyzer, args.ghidra_script
+        args.build,
+        args.matrix,
+        args.output.parent,
+        args.analyzer,
+        args.ghidra_script,
+        args.workers,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(

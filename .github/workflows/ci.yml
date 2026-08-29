@@ -77,7 +77,7 @@ jobs:
               Path(summary_path).write_text("\n".join(lines) + "\n", encoding="utf-8")
           PY
       - name: Run static recovery benchmark
-        run: python scripts/tool_benchmark.py --build build --matrix results/matrix.json --output results/tools.json --report-only
+        run: python scripts/tool_benchmark.py --build build --matrix results/matrix.json --output results/tools.json --workers 8 --report-only
         if: always()
       - name: Validate full differential matrix
         if: always()

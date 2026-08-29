@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from scripts.build_corpus import SOURCE_FLAGS, SOURCE_SPECS, is_linux_elf_x86_64
 from scripts.differential_run import generated_inputs
 from scripts.run_matrix import _pass_summary, _wait_for_process, run_matrix
-from scripts.tool_benchmark import _MAX_SAMPLES, _metric_object
+from scripts.tool_benchmark import _MAX_SAMPLES, _metric_object, benchmark
 
 
 def _write_elf_header(path: Path) -> None:
@@ -85,6 +85,18 @@ def test_tool_benchmark_limit_covers_current_full_matrix() -> None:
     pass_count = 6
 
     assert _MAX_SAMPLES >= matrix_size * pass_count
+
+
+def test_tool_benchmark_rejects_non_positive_worker_count(tmp_path: Path) -> None:
+    matrix = tmp_path / "matrix.json"
+    matrix.write_text(json.dumps({"records": []}), encoding="utf-8")
+
+    try:
+        benchmark(tmp_path, matrix, tmp_path / "results", workers=0)
+    except ValueError as error:
+        assert str(error) == "workers must be positive"
+    else:
+        raise AssertionError("benchmark accepted a non-positive worker count")
 
 
 def test_generated_inputs_cover_boundaries_deterministically() -> None:
