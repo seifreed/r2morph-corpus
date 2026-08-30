@@ -29,6 +29,7 @@ SOURCE_SPECS = (
     ("variadic_gp.c", "c"),
     ("variadic_fp.c", "c"),
     ("threads_signals.c", "c"),
+    ("atomic_rmw.c", "c"),
     ("avx128.c", "c"),
     ("avx128_scalar.c", "c"),
     ("avx128_integer.c", "c"),
@@ -52,6 +53,7 @@ SOURCE_FLAGS = {
     "avx256_shuffle.c": ("-mavx2", "-mno-vzeroupper"),
     "avx256_mixed_state.c": ("-mavx2", "-mno-vzeroupper"),
     "threads_signals.c": ("-pthread",),
+    "atomic_rmw.c": ("-pthread",),
 }
 _ELF_MAGIC = b"\x7fELF"
 _ELF_CLASS_64 = 2

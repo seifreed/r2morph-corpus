@@ -99,6 +99,14 @@ def test_build_matrix_includes_threads_signals_source() -> None:
     assert ("threads_signals.c", "c") in SOURCE_SPECS
 
 
+def test_build_matrix_includes_atomic_rmw_source() -> None:
+    assert ("atomic_rmw.c", "c") in SOURCE_SPECS
+
+
+def test_build_matrix_declares_atomic_rmw_compiler_flags() -> None:
+    assert SOURCE_FLAGS["atomic_rmw.c"] == ("-pthread",)
+
+
 def test_build_matrix_declares_avx128_compiler_flags() -> None:
     assert SOURCE_FLAGS["avx128.c"] == ("-mavx",)
 
