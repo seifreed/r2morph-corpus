@@ -8,7 +8,7 @@ __attribute__((noinline)) static void *worker(void *argument) {
     for (unsigned index = 0; index < iterations; ++index) {
         unsigned delta = 1;
 #if defined(__x86_64__)
-        __asm__ volatile("lock addl %1, %0" : "+m"(counter) : "r"(delta) : "memory", "cc");
+        __asm__ volatile("lock xaddl %1, %0" : "+m"(counter), "+r"(delta) : : "memory", "cc");
 #else
         __atomic_fetch_add(&counter, delta, __ATOMIC_SEQ_CST);
 #endif
