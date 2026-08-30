@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 # Keep the benchmark bounded while covering the current full corpus matrix.
-_MAX_SAMPLES = 8192
+_MAX_SAMPLES = 16384
 _MAX_ERROR_LENGTH = 240
 _ANALYZER_TIMEOUT_SECONDS = 30
 _GHIDRA_TIMEOUT_SECONDS = 600
