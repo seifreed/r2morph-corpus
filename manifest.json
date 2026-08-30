@@ -16,6 +16,7 @@
     {"name": "stack_abi.c", "language": "c", "features": ["stack-passed arguments", "integer ABI"]},
     {"name": "variadic_tls.c", "language": "c", "features": ["floating-point varargs", "tls"]},
     {"name": "variadic_gp.c", "language": "c", "features": ["integer varargs", "register and stack ABI"]},
+    {"name": "variadic_fp.c", "language": "c", "features": ["floating-point varargs", "XMM register and stack ABI"]},
     {"name": "threads_signals.c", "language": "c", "features": ["threads", "tls", "signals"]},
     {"name": "avx128.c", "language": "c", "features": ["128-bit AVX", "packed floating point"]},
     {"name": "avx128_scalar.c", "language": "c", "features": ["scalar AVX", "vector call ABI"]},

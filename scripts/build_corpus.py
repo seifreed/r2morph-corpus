@@ -27,6 +27,7 @@ SOURCE_SPECS = (
     ("stack_abi.c", "c"),
     ("variadic_tls.c", "c"),
     ("variadic_gp.c", "c"),
+    ("variadic_fp.c", "c"),
     ("threads_signals.c", "c"),
     ("avx128.c", "c"),
     ("avx128_scalar.c", "c"),

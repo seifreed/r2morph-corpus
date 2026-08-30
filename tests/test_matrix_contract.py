@@ -81,6 +81,10 @@ def test_build_matrix_includes_integer_variadic_source() -> None:
     assert ("variadic_gp.c", "c") in SOURCE_SPECS
 
 
+def test_build_matrix_includes_floating_point_variadic_source() -> None:
+    assert ("variadic_fp.c", "c") in SOURCE_SPECS
+
+
 def test_published_manifest_matches_build_matrix_sources() -> None:
     manifest = json.loads(
         Path(__file__).resolve().parents[1].joinpath("manifest.json").read_text()
