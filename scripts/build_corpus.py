@@ -34,6 +34,7 @@ SOURCE_SPECS = (
     ("avx256.c", "c"),
     ("avx256_call.c", "c"),
     ("avx256_vzeroupper.c", "c"),
+    ("avx256_vzeroall.c", "c"),
 )
 SOURCE_FLAGS = {
     "avx128.c": ("-mavx",),
@@ -43,6 +44,7 @@ SOURCE_FLAGS = {
     "avx256.c": ("-mavx", "-mno-vzeroupper"),
     "avx256_call.c": ("-mavx", "-mno-vzeroupper"),
     "avx256_vzeroupper.c": ("-mavx", "-mno-vzeroupper"),
+    "avx256_vzeroall.c": ("-mavx", "-mno-vzeroupper"),
     "threads_signals.c": ("-pthread",),
 }
 _ELF_MAGIC = b"\x7fELF"

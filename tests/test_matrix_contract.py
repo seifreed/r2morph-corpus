@@ -101,12 +101,20 @@ def test_build_matrix_includes_vzeroupper_source() -> None:
     assert ("avx256_vzeroupper.c", "c") in SOURCE_SPECS
 
 
+def test_build_matrix_includes_vzeroall_source() -> None:
+    assert ("avx256_vzeroall.c", "c") in SOURCE_SPECS
+
+
 def test_build_matrix_declares_avx256_compiler_flags() -> None:
     assert SOURCE_FLAGS["avx256.c"] == ("-mavx", "-mno-vzeroupper")
 
 
 def test_build_matrix_declares_vzeroupper_compiler_flags() -> None:
     assert SOURCE_FLAGS["avx256_vzeroupper.c"] == ("-mavx", "-mno-vzeroupper")
+
+
+def test_build_matrix_declares_vzeroall_compiler_flags() -> None:
+    assert SOURCE_FLAGS["avx256_vzeroall.c"] == ("-mavx", "-mno-vzeroupper")
 
 
 def test_build_matrix_declares_avx128_integer_compiler_flags() -> None:
