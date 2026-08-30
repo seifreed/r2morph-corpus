@@ -8,7 +8,7 @@ name: Corpus
   workflow_dispatch:
 
 env:
-  R2MORPH_REF: "b6ae3d7"
+  R2MORPH_REF: "f4ee92f"
 
 jobs:
   build-and-compare:
