@@ -22,6 +22,7 @@
     {"name": "avx128_integer.c", "language": "c", "features": ["128-bit integer SIMD"]},
     {"name": "avx256_integer.c", "language": "c", "features": ["256-bit integer SIMD", "variable shifts"]},
     {"name": "avx256.c", "language": "c", "features": ["256-bit AVX", "packed floating point"]},
-    {"name": "avx256_call.c", "language": "c", "features": ["256-bit vector call ABI"]}
+    {"name": "avx256_call.c", "language": "c", "features": ["256-bit vector call ABI"]},
+    {"name": "avx256_vzeroupper.c", "language": "c", "features": ["VZEROUPPER", "256-bit SIMD state"]}
   ]
 }

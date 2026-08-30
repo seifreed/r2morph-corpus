@@ -10,7 +10,8 @@ exceptions, 128-bit SIMD including packed and scalar AVX, AVX256 integer
 variable shifts, AVX256 call ABI,
 indexed memory, dedicated indirect
 function-pointer calls, stack-passed arguments, integer and floating-point
-variadic ABI handling, threads, TLS, and signal delivery.
+variadic ABI handling, threads, TLS, signal delivery, and explicit
+VZEROUPPER upper-lane clearing.
 
 Build the available matrix:
 
