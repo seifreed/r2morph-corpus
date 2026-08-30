@@ -3,6 +3,9 @@ name: Ghidra Corpus Benchmark
 "on":
   workflow_dispatch:
 
+env:
+  R2MORPH_REF: 80f24d5084f3f91df47de49c3f202c73f449a08f
+
 jobs:
   ghidra:
     runs-on: ubuntu-latest
@@ -40,7 +43,7 @@ jobs:
             "pyyaml>=6.0.0" \
             "pytest>=7.4.0"
           python -m pip install --no-deps \
-            "git+https://github.com/seifreed/r2morph.git@main"
+            "git+https://github.com/seifreed/r2morph.git@${R2MORPH_REF}"
 
       - name: Build compiler matrix
         run: python scripts/build_corpus.py --output build

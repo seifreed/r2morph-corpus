@@ -20,7 +20,8 @@ Build the available matrix:
 
 Missing compilers and unavailable static linkers are explicit omissions in
 build/manifest.json. Reports contain source/binary SHA-256 values, commands,
-tool versions, statuses, durations, output digests, and sizes. Raw process
+tool versions, the pinned r2morph commit, statuses, durations, output digests,
+and sizes. Raw process
 output is not retained.
 
 Run the transformation and differential contract for every built sample and
