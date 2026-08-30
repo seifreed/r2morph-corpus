@@ -123,6 +123,10 @@ def test_build_matrix_includes_vpshufd_source() -> None:
     assert ("avx256_shuffle.c", "c") in SOURCE_SPECS
 
 
+def test_build_matrix_includes_mixed_vex_state_source() -> None:
+    assert ("avx256_mixed_state.c", "c") in SOURCE_SPECS
+
+
 def test_build_matrix_declares_avx256_compiler_flags() -> None:
     assert SOURCE_FLAGS["avx256.c"] == ("-mavx", "-mno-vzeroupper")
 
@@ -137,6 +141,10 @@ def test_build_matrix_declares_vzeroall_compiler_flags() -> None:
 
 def test_build_matrix_declares_vpshufd_compiler_flags() -> None:
     assert SOURCE_FLAGS["avx256_shuffle.c"] == ("-mavx2", "-mno-vzeroupper")
+
+
+def test_build_matrix_declares_mixed_vex_state_compiler_flags() -> None:
+    assert SOURCE_FLAGS["avx256_mixed_state.c"] == ("-mavx2", "-mno-vzeroupper")
 
 
 def test_build_matrix_declares_avx128_integer_compiler_flags() -> None:
