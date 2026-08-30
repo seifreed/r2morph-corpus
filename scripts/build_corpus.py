@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from functools import lru_cache
 import hashlib
 import json
 import shutil
@@ -98,6 +99,7 @@ def compile_command(
     return [compiler, *flags, str(source), "-o", str(output)]
 
 
+@lru_cache(maxsize=None)
 def version(compiler: str) -> str:
     result = subprocess.run(
         [compiler, "--version"], capture_output=True, text=True, timeout=10, check=True
