@@ -4,7 +4,7 @@ name: Ghidra Corpus Benchmark
   workflow_dispatch:
 
 env:
-  R2MORPH_REF: "a164b7f"
+  R2MORPH_REF: "956ea38"
 
 jobs:
   ghidra:
