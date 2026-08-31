@@ -46,6 +46,7 @@ SOURCE_SPECS = (
     ("avx256_lane_shuffle.c", "c"),
     ("avx256_lane_shuffle_pd.c", "c"),
     ("avx256_two_source_shuffle.c", "c"),
+    ("avx256_two_source_blend.c", "c"),
     ("avx256_mixed_state.c", "c"),
 )
 SOURCE_FLAGS = {
@@ -65,6 +66,7 @@ SOURCE_FLAGS = {
     "avx256_lane_shuffle.c": ("-mavx", "-mno-vzeroupper"),
     "avx256_lane_shuffle_pd.c": ("-mavx", "-mno-vzeroupper"),
     "avx256_two_source_shuffle.c": ("-mavx", "-mno-vzeroupper"),
+    "avx256_two_source_blend.c": ("-mavx", "-mno-vzeroupper"),
     "avx256_mixed_state.c": ("-mavx2", "-mno-vzeroupper"),
     "threads_signals.c": ("-pthread",),
     "atomic_rmw.c": ("-pthread",),
