@@ -143,6 +143,14 @@ def test_build_matrix_includes_variable_integer_shift_source() -> None:
     assert ("avx_variable_shift.c", "c") in SOURCE_SPECS
 
 
+def test_build_matrix_includes_movmskb_source() -> None:
+    assert ("avx_movmskb.c", "c") in SOURCE_SPECS
+
+
+def test_build_matrix_declares_movmskb_compiler_flags() -> None:
+    assert SOURCE_FLAGS["avx_movmskb.c"] == ("-mavx2", "-mno-vzeroupper")
+
+
 def test_build_matrix_declares_avx256_compiler_flags() -> None:
     assert SOURCE_FLAGS["avx256.c"] == ("-mavx", "-mno-vzeroupper")
 
