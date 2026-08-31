@@ -12,9 +12,9 @@ __attribute__((noinline)) static void shift256(
     __asm__ volatile(
         "vmovdqu (%0), %%ymm1\n"
         "vmovdqu (%1), %%ymm2\n"
-        "vpslld %%ymm2, %%ymm1, %%ymm0\n"
-        "vpsrld %%ymm2, %%ymm1, %%ymm3\n"
-        "vpsrad %%ymm2, %%ymm1, %%ymm4\n"
+        "vpsllvd %%ymm2, %%ymm1, %%ymm0\n"
+        "vpsrlvd %%ymm2, %%ymm1, %%ymm3\n"
+        "vpsravd %%ymm2, %%ymm1, %%ymm4\n"
         "vmovdqu %%ymm0, (%2)\n"
         "vmovdqu %%ymm3, (%3)\n"
         "vmovdqu %%ymm4, (%4)\n"
