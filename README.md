@@ -12,7 +12,8 @@ indexed memory, dedicated indirect
 function-pointer calls, stack-passed arguments, integer and floating-point
 variadic ABI handling, threads, TLS, signal delivery, and explicit
 VZEROUPPER upper-lane clearing, VZEROALL full-register clearing, and VEX.256
-integer and floating-point lane shuffles, byte shuffles, lane permutations,
+integer and floating-point lane shuffles including VPERMILPS and VPERMILPD,
+byte shuffles, lane permutations,
 and VEX.128-to-VEX.256 state transitions.
 
 Build the available matrix:

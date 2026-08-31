@@ -33,6 +33,7 @@
     {"name": "avx256_byte_shuffle.c", "language": "c", "features": ["VPSHUFB", "128-bit and 256-bit integer SIMD"]},
     {"name": "avx256_permute.c", "language": "c", "features": ["VPERM2F128", "256-bit floating-point lane permutation"]},
     {"name": "avx256_lane_shuffle.c", "language": "c", "features": ["VPERMILPS", "256-bit floating-point lane shuffle"]},
+    {"name": "avx256_lane_shuffle_pd.c", "language": "c", "features": ["VPERMILPD", "256-bit double-precision lane shuffle"]},
     {"name": "avx256_mixed_state.c", "language": "c", "features": ["VEX.128 to VEX.256 state transition", "256-bit SIMD state"]}
   ]
 }
