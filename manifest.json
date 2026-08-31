@@ -37,6 +37,7 @@
     {"name": "avx256_two_source_shuffle.c", "language": "c", "features": ["VSHUFPS", "VSHUFPD", "256-bit two-source floating-point shuffle"]},
     {"name": "avx256_two_source_blend.c", "language": "c", "features": ["VBLENDPS", "VBLENDPD", "256-bit two-source floating-point blend"]},
     {"name": "avx256_variable_blend.c", "language": "c", "features": ["VBLENDVPS", "VBLENDVPD", "256-bit vector-mask floating-point blend"]},
+    {"name": "avx256_variable_permute.c", "language": "c", "features": ["VPERMILPS", "VPERMILPD", "256-bit vector-control floating-point permutation"]},
     {"name": "avx256_mixed_state.c", "language": "c", "features": ["VEX.128 to VEX.256 state transition", "256-bit SIMD state"]}
   ]
 }
