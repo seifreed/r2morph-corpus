@@ -135,6 +135,10 @@ def test_build_matrix_includes_vpshufd_source() -> None:
     assert ("avx256_shuffle.c", "c") in SOURCE_SPECS
 
 
+def test_build_matrix_includes_vperm2f128_source() -> None:
+    assert ("avx256_permute.c", "c") in SOURCE_SPECS
+
+
 def test_build_matrix_includes_mixed_vex_state_source() -> None:
     assert ("avx256_mixed_state.c", "c") in SOURCE_SPECS
 
@@ -161,6 +165,10 @@ def test_build_matrix_declares_vzeroupper_compiler_flags() -> None:
 
 def test_build_matrix_declares_vzeroall_compiler_flags() -> None:
     assert SOURCE_FLAGS["avx256_vzeroall.c"] == ("-mavx", "-mno-vzeroupper")
+
+
+def test_build_matrix_declares_vperm2f128_compiler_flags() -> None:
+    assert SOURCE_FLAGS["avx256_permute.c"] == ("-mavx", "-mno-vzeroupper")
 
 
 def test_build_matrix_declares_vpshufd_compiler_flags() -> None:
