@@ -131,6 +131,14 @@ def test_build_matrix_declares_avx128_test_compiler_flags() -> None:
     assert SOURCE_FLAGS["avx128_test.c"] == ("-mavx",)
 
 
+def test_build_matrix_includes_avx256_test_source() -> None:
+    assert ("avx256_test.c", "c") in SOURCE_SPECS
+
+
+def test_build_matrix_declares_avx256_test_compiler_flags() -> None:
+    assert SOURCE_FLAGS["avx256_test.c"] == ("-mavx2", "-mno-vzeroupper")
+
+
 def test_build_matrix_declares_scalar_avx_compiler_flags() -> None:
     assert SOURCE_FLAGS["avx128_scalar.c"] == ("-mavx",)
 
