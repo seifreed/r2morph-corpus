@@ -189,6 +189,14 @@ def test_build_matrix_declares_two_source_shuffle_compiler_flags() -> None:
     assert SOURCE_FLAGS["avx256_compare.c"] == ("-mavx2", "-mno-vzeroupper")
 
 
+def test_build_matrix_includes_packed_floating_compare_source() -> None:
+    assert ("avx_packed_compare.c", "c") in SOURCE_SPECS
+
+
+def test_build_matrix_declares_packed_floating_compare_compiler_flags() -> None:
+    assert SOURCE_FLAGS["avx_packed_compare.c"] == ("-mavx", "-mno-vzeroupper")
+
+
 def test_build_matrix_includes_mixed_vex_state_source() -> None:
     assert ("avx256_mixed_state.c", "c") in SOURCE_SPECS
 

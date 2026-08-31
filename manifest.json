@@ -41,6 +41,7 @@
     {"name": "avx256_variable_blend.c", "language": "c", "features": ["VBLENDVPS", "VBLENDVPD", "256-bit vector-mask floating-point blend"]},
     {"name": "avx256_variable_permute.c", "language": "c", "features": ["VPERMILPS", "VPERMILPD", "256-bit vector-control floating-point permutation"]},
     {"name": "avx256_addsub.c", "language": "c", "features": ["VADDSUBPS", "VADDSUBPD", "256-bit alternating floating-point add-subtract"]},
+    {"name": "avx_packed_compare.c", "language": "c", "features": ["VCMPPS", "VCMPPD", "XMM and YMM packed floating-point comparisons", "ordered predicates"]},
     {"name": "avx256_compare.c", "language": "c", "features": ["VPCMPEQB", "VPCMPGTW", "VPCMPGTQ", "256-bit integer comparisons"]},
     {"name": "avx256_test.c", "language": "c", "features": ["VPTEST", "ZF/CF flag propagation", "256-bit integer SIMD"]},
     {"name": "avx256_mixed_state.c", "language": "c", "features": ["VEX.128 to VEX.256 state transition", "256-bit SIMD state"]}

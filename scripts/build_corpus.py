@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import argparse
-from functools import lru_cache
 import hashlib
 import json
 import shutil
 import struct
 import subprocess
 import time
+from functools import cache
 from itertools import product
 from pathlib import Path
 from typing import Any
@@ -52,6 +52,7 @@ SOURCE_SPECS = (
     ("avx256_variable_blend.c", "c"),
     ("avx256_variable_permute.c", "c"),
     ("avx256_addsub.c", "c"),
+    ("avx_packed_compare.c", "c"),
     ("avx256_compare.c", "c"),
     ("avx256_test.c", "c"),
     ("avx256_mixed_state.c", "c"),
@@ -79,6 +80,7 @@ SOURCE_FLAGS = {
     "avx256_variable_blend.c": ("-mavx", "-mno-vzeroupper"),
     "avx256_variable_permute.c": ("-mavx2", "-mno-vzeroupper"),
     "avx256_addsub.c": ("-mavx", "-mno-vzeroupper"),
+    "avx_packed_compare.c": ("-mavx", "-mno-vzeroupper"),
     "avx256_compare.c": ("-mavx2", "-mno-vzeroupper"),
     "avx256_test.c": ("-mavx2", "-mno-vzeroupper"),
     "avx256_mixed_state.c": ("-mavx2", "-mno-vzeroupper"),
@@ -136,7 +138,7 @@ def compile_command(
     return [compiler, *flags, str(source), "-o", str(output)]
 
 
-@lru_cache(maxsize=None)
+@cache
 def version(compiler: str) -> str:
     result = subprocess.run(
         [compiler, "--version"], capture_output=True, text=True, timeout=10, check=True
