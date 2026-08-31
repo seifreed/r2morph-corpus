@@ -22,6 +22,7 @@
     {"name": "avx128.c", "language": "c", "features": ["128-bit AVX", "packed floating point"]},
     {"name": "avx128_scalar.c", "language": "c", "features": ["scalar AVX", "vector call ABI"]},
     {"name": "avx128_integer.c", "language": "c", "features": ["128-bit integer SIMD"]},
+    {"name": "avx128_compare.c", "language": "c", "features": ["VPCMPEQB", "VPCMPEQW", "VPCMPEQQ", "VPCMPGTB", "VPCMPGTW", "VPCMPGTQ", "128-bit integer comparisons"]},
     {"name": "avx_variable_shift.c", "language": "c", "features": ["VPSLLVD", "per-lane variable shifts", "128-bit and 256-bit integer SIMD"]},
     {"name": "avx_movmskb.c", "language": "c", "features": ["PMOVMSKB", "VPMOVMSKB", "XMM and YMM byte-mask extraction"]},
     {"name": "avx256_integer.c", "language": "c", "features": ["256-bit integer SIMD", "variable shifts"]},
