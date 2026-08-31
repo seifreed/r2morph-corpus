@@ -50,6 +50,7 @@ SOURCE_SPECS = (
     ("avx256_variable_blend.c", "c"),
     ("avx256_variable_permute.c", "c"),
     ("avx256_addsub.c", "c"),
+    ("avx256_compare.c", "c"),
     ("avx256_mixed_state.c", "c"),
 )
 SOURCE_FLAGS = {
@@ -73,6 +74,7 @@ SOURCE_FLAGS = {
     "avx256_variable_blend.c": ("-mavx", "-mno-vzeroupper"),
     "avx256_variable_permute.c": ("-mavx2", "-mno-vzeroupper"),
     "avx256_addsub.c": ("-mavx", "-mno-vzeroupper"),
+    "avx256_compare.c": ("-mavx2", "-mno-vzeroupper"),
     "avx256_mixed_state.c": ("-mavx2", "-mno-vzeroupper"),
     "threads_signals.c": ("-pthread",),
     "atomic_rmw.c": ("-pthread",),

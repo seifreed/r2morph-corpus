@@ -161,6 +161,8 @@ def test_build_matrix_declares_two_source_shuffle_compiler_flags() -> None:
     assert SOURCE_FLAGS["avx256_variable_blend.c"] == ("-mavx", "-mno-vzeroupper")
     assert SOURCE_FLAGS["avx256_variable_permute.c"] == ("-mavx2", "-mno-vzeroupper")
     assert SOURCE_FLAGS["avx256_addsub.c"] == ("-mavx", "-mno-vzeroupper")
+    assert ("avx256_compare.c", "c") in SOURCE_SPECS
+    assert SOURCE_FLAGS["avx256_compare.c"] == ("-mavx2", "-mno-vzeroupper")
 
 
 def test_build_matrix_includes_mixed_vex_state_source() -> None:

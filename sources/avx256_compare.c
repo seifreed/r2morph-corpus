@@ -1,0 +1,33 @@
+#include <immintrin.h>
+#include <stdint.h>
+
+__attribute__((noinline)) static __m256i compare_bytes(__m256i left, __m256i right) {
+    return _mm256_cmpeq_epi8(left, right);
+}
+
+__attribute__((noinline)) static __m256i compare_words(__m256i left, __m256i right) {
+    return _mm256_cmpgt_epi16(left, right);
+}
+
+int main(void) {
+    const int8_t left_bytes[32] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+                                   16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
+    const int8_t right_bytes[32] = {0, 9, 2, 9, 4, 9, 6, 9, 8, 9, 10, 9, 12, 9, 14, 9,
+                                    16, 9, 18, 9, 20, 9, 22, 9, 24, 9, 26, 9, 28, 9, 30, 9};
+    const int16_t left_words[16] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    const int16_t right_words[16] = {0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14, 17};
+    int8_t byte_result[32];
+    int16_t word_result[16];
+    const __m256i bytes = compare_bytes(_mm256_loadu_si256((const __m256i *)left_bytes),
+                                        _mm256_loadu_si256((const __m256i *)right_bytes));
+    const __m256i words = compare_words(_mm256_loadu_si256((const __m256i *)left_words),
+                                        _mm256_loadu_si256((const __m256i *)right_words));
+    _mm256_storeu_si256((__m256i *)byte_result, bytes);
+    _mm256_storeu_si256((__m256i *)word_result, words);
+    return byte_result[0] == -1 && byte_result[1] == 0 && byte_result[2] == -1
+            && byte_result[30] == -1 && byte_result[31] == 0
+            && word_result[0] == -1 && word_result[1] == 0 && word_result[2] == -1
+            && word_result[14] == -1 && word_result[15] == 0
+        ? 42
+        : 1;
+}
