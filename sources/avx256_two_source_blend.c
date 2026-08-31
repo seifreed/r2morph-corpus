@@ -23,6 +23,7 @@ int main(void) {
     vector256 float_result = blend_float(float_left, float_right);
     double_vector256 double_result = blend_double(double_left, double_right);
     return float_result[0] == 1.0f && float_result[1] == 12.0f
-        && float_result[7] == 18.0f && double_result[0] == 1.0
-        && double_result[3] == 14.0 ? 42 : 1;
+        && float_result[6] == 17.0f && float_result[7] == 8.0f
+        && double_result[0] == 11.0 && double_result[1] == 2.0
+        && double_result[2] == 13.0 && double_result[3] == 4.0 ? 42 : 1;
 }

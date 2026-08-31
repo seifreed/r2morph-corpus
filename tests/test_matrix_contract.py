@@ -150,11 +150,13 @@ def test_build_matrix_includes_vpermilpd_source() -> None:
 def test_build_matrix_includes_two_source_shuffle_source() -> None:
     assert ("avx256_two_source_shuffle.c", "c") in SOURCE_SPECS
     assert ("avx256_two_source_blend.c", "c") in SOURCE_SPECS
+    assert ("avx256_variable_blend.c", "c") in SOURCE_SPECS
 
 
 def test_build_matrix_declares_two_source_shuffle_compiler_flags() -> None:
     assert SOURCE_FLAGS["avx256_two_source_shuffle.c"] == ("-mavx", "-mno-vzeroupper")
     assert SOURCE_FLAGS["avx256_two_source_blend.c"] == ("-mavx", "-mno-vzeroupper")
+    assert SOURCE_FLAGS["avx256_variable_blend.c"] == ("-mavx", "-mno-vzeroupper")
 
 
 def test_build_matrix_includes_mixed_vex_state_source() -> None:
