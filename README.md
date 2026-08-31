@@ -15,7 +15,8 @@ VZEROUPPER upper-lane clearing, VZEROALL full-register clearing, and VEX.256
 integer and floating-point lane shuffles including VPERMILPS and VPERMILPD,
 two-source VSHUFPS, VSHUFPD, VBLENDPS, VBLENDPD, VBLENDVPS, VBLENDVPD, variable-control VPERMILPS/VPERMILPD, VADDSUBPS, and VADDSUBPD operations, byte shuffles, lane permutations,
 VPCMPEQB, VPCMPGTW, and VPCMPGTQ integer comparisons,
-and VEX.128-to-VEX.256 state transitions.
+and VEX.128-to-VEX.256 state transitions, including scalar RIP-relative
+floating-point comparisons.
 
 Build the available matrix:
 
